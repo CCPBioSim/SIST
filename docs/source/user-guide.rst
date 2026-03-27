@@ -1,10 +1,14 @@
-# SIST: stress-induced structural transitions in superhelical DNA 
+===============================================================
+SIST: Stress-Induced Structural Transitions in superhelical DNA
+===============================================================
 
-## Purpose of SIST
+Purpose of SIST
+===============
 
 The codes in this repository are for analyzing three types of structural transitions in superhelical DNA molecules of specified base sequences and kilobase lengths.  These are strand separation, BZ transitions and cruciform extrusion.  More types of transitions may be added as their energetics become known.  The statistical mechanical methods and algorithms used in these analyses are described in the papers cited below. 
 
-## Codes
+Codes
+=====
 
 1. *master.pl*: This is a pipeline to run all algorithms.
 
@@ -14,11 +18,13 @@ The codes in this repository are for analyzing three types of structural transit
 
 4. *trans_compete*: C++ code containing the algorithm for analyzing the competition between strand separation, Z-DNA, and cruciform extrusion.
 
-## Instructions for running *master.pl*
+Instructions for running *master.pl*
+------------------------------------
 
 The code *master.pl* contains a pipeline that allows the user to run either trans_three or trans_compete with various parameters provided in the menu of the code. Run “perl master.pl” for more detailed instructions and to see all available parameters.  Sequence file fasta format is recommended. If another format is provided, the sequence is converted into an appropriate format.  Multiple sequences in one file are not permitted.
 
-**Algorithm types:**
+Algorithm types:
+----------------
 
 1. -a M: melting transition only (SIDD).
 
@@ -29,7 +35,8 @@ The code *master.pl* contains a pipeline that allows the user to run either tran
 4. -a A: competition between melting, Z-DNA, and cruciform transitions.
 
 
-**To compile and run follow these steps:**
+To compile and run follow these steps:
+--------------------------------------
 
 1. Download *master.pl*, *IR_finder.pl*, trans_three/ and trans_compete/ folders into a working directory.
 
@@ -58,7 +65,8 @@ Competition code at superhelix density of σ = -0.07 for a circular plasmid, dis
 perl master.pl -a A -s 0.07 -c -b -p -r -f sequence_file
 ```
 
-## Usage of C++ codes
+Usage of C++ codes
+==================
 
 Type make on command line to compile.  Once this is done, qsidd is the executable. 
 Run “./qsidd” for more detailed instructions and to see all available parameters. To run with default parameters: ./qsidd -f sequence_file. 
@@ -82,7 +90,8 @@ perl IR_finder.pl temperature shape sequence_file
 
 Here “string” is the output from *IR_finder.pl*.  Run “ perl IR_finder.pl” for a more detailed explanation of step 1.  Note: *master.pl* can do the above workflow automatically.
 
-## Algorithm limitations and recommended parameter ranges
+Algorithm limitations and recommended parameter ranges
+======================================================
 
 If the codes are executed outside of the ranges listed below, a warning will be printed in the output.  We advise that you do not perform the analysis outside the recommended guidelines. Master.pl options corresponding to each parameter are listed below.
 
@@ -100,7 +109,8 @@ If the codes are executed outside of the ranges listed below, a warning will be 
 
 5. Salt concentration less than 0.0001 M may be outside physiological range.
 
-## Citations
+Citations
+=========
 
 When using these algorithms you must cite the first paper below, and some or all of the others, depending on which types of analyses you perform:
 
