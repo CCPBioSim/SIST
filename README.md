@@ -1,4 +1,4 @@
-# SIST: stress-induced structural transitions in superhelical DNA 
+# SIST: Stress-Induced Structural Transitions in superhelical DNA 
 
 ## Purpose of SIST
 
