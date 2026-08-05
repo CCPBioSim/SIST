@@ -1,8 +1,10 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+
 # Editor-based HTTP Client requests
 /httpRequests/
+
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
@@ -10,23 +12,23 @@
 # Prerequisites
 *.d
 
-# Compiled Object files
+# Compiled object files
 *.slo
 *.lo
 *.o
 *.obj
 
-# Precompiled Headers
+# Precompiled headers
 *.gch
 *.pch
 
 # Linker files
 *.ilk
 
-# Debugger Files
+# Debugger files
 *.pdb
 
-# Compiled Dynamic libraries
+# Compiled dynamic libraries
 *.so
 *.dylib
 *.dll
@@ -35,7 +37,7 @@
 *.mod
 *.smod
 
-# Compiled Static libraries
+# Compiled static libraries
 *.lai
 *.la
 *.a
@@ -46,13 +48,27 @@
 *.out
 *.app
 
-# debug information files
+# Debug information files
 *.dwo
+
+# Build directories
+build/
+dist/
+cmake-build-*/
 
 # Sphinx build output
 docs/build/
 docs/source/_autosummary/
 
-# Python cache
+# Python environments, caches, and packaging
+.venv/
+venv/
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Regression test artefacts
+.testdata/
+test-results/
