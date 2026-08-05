@@ -7,7 +7,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: pr-ci-${{ github.ref }}
+  group: pr-ci-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: pr-regression-failure
-          path: .testdata/**
+          path: .testdata/
           if-no-files-found: ignore
           include-hidden-files: true
           retention-days: 7
@@ -65,7 +65,7 @@ jobs:
       - name: Install documentation dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e '.[docs]'
+          python -m pip install -r docs/requirements.txt
 
       - name: Build documentation
         run: |
@@ -73,10 +73,10 @@ jobs:
           make -C docs html SPHINXOPTS="-W --keep-going"
 
       - name: Upload documentation
-        if: always()
+        if: success()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: docs-html
-          path: docs/build/html
-          if-no-files-found: warn
+          path: docs/build/html/
+          if-no-files-found: error
           retention-days: 7

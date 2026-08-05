@@ -1,21 +1,23 @@
 name: Regression Tests
 
 on:
-  pull_request:
   push:
     branches:
       - main
   schedule:
-    - cron: '0 8 * * 1'
+    - cron: "0 8 * * 1"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
-  group: sist-regression-${{ github.ref }}
+  group: sist-regression-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   regression:
-    name: SIST regression
+    name: SIST Regression
     runs-on: ubuntu-24.04
     timeout-minutes: 30
 
@@ -43,8 +45,10 @@ jobs:
 
       - name: Upload regression artefacts on failure
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: sist-regression-artifacts
-          path: .testdata/**
+          name: sist-regression-failure
+          path: .testdata/
           if-no-files-found: ignore
+          include-hidden-files: true
+          retention-days: 7
