@@ -22,8 +22,8 @@ perl master.pl \
 
 ## Files
 
-* `competition.rebuilt.txt` — output produced from executables rebuilt from the maintained source. This is the regression-test reference.
-* `competition.inherited.txt` — output produced by the executable originally included in the repository. This is retained for historical comparison.
+* `competition.rebuilt.txt` - output produced from executables rebuilt from the maintained source. This is the regression-test reference.
+* `competition.inherited.txt` - output produced by the executable originally included in the repository. This is retained for historical comparison.
 
 All values common to both executables matched exactly, excluding the variable `Run time` line.
 
