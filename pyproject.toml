@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=77,<84"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SIST"
+version = "0.0.1"
+description = "Stress-Induced Structural Transitions in superhelical DNA."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+maintainers = [
+    { name = "Harry Swift", email = "harry.swift@stfc.ac.uk" },
+]
+
+[project.urls]
+Repository = "https://github.com/CCPBioSim/SIST"
+
+[project.optional-dependencies]
+testing = [
+    "pytest>=9.0,<10.0",
+]
+
+[tool.setuptools]
+# SIST is currently a Perl/C++ application. This metadata manages the Python
+# test harness and its development dependencies; it does not package SIST.
+packages = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "regression: end-to-end regression tests against reference outputs",
+    "slow: long-running tests excluded from the default test suite",
+]

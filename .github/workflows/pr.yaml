@@ -1,0 +1,82 @@
+name: Pull Request CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    name: Regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: "3.14"
+
+      - name: Install testing dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[testing]'
+
+      - name: Run regression tests
+        run: |
+          python -m pytest tests \
+            -m regression \
+            -vv \
+            --durations=20 \
+            --basetemp=.testdata
+
+      - name: Upload regression artefacts on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: pr-regression-failure
+          path: .testdata/
+          if-no-files-found: ignore
+          include-hidden-files: true
+          retention-days: 7
+
+  docs:
+    name: Docs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: "3.14"
+
+      - name: Install documentation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r docs/requirements.txt
+
+      - name: Build documentation
+        run: |
+          make -C docs clean
+          make -C docs html SPHINXOPTS="-W --keep-going"
+
+      - name: Upload documentation
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: docs-html
+          path: docs/build/html/
+          if-no-files-found: error
+          retention-days: 7
