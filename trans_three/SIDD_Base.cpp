@@ -240,8 +240,8 @@ double SIDD_Base::prepare_sequence(std::string sequence) {
 void SIDD_Base::prepare_cruciforms() {
     string str1 = cr_string;
     size_t found1 = 0;
-    int IR[2];
-    double energy;
+    int IR[2] = {0, 0};
+    double energy = 0.0;
     int pos1 = 0;
     int pos2 = 0;
     string str2;
@@ -267,15 +267,16 @@ void SIDD_Base::prepare_cruciforms() {
                 if(found2!=string::npos) {
                     str3 = str2.substr(pos2,found2-pos2);
                     pos2 = int(found2)+1;
-                    if (i==2) 
-                        energy=atof(str3.c_str());
-                    else 
+                    if (i == 2)
+                        energy = atof(str3.c_str());
+                    else if (i < 2)
                         IR[i] = atoi(str3.c_str());
                     i++;
                 }
             }
-            if (IR[1] <= MaxWindowSize)
-		en_cruciforms[IR[0]-1][IR[1]] = energy;
+            if (i == 3 && IR[0] > 0 && IR[0] <= length_seq &&
+                IR[1] > 0 && IR[1] <= MaxWindowSize)
+                en_cruciforms[IR[0]-1][IR[1]] = energy;
             pos1 = int(found1)+1;
         }
     }
