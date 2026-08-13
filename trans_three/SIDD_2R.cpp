@@ -97,8 +97,8 @@ bool SIDD_2R::Search_Low2RE()
 	StatesInTwoRuns = count;
 	ZsumB += sum_2RB;
 	ZsumG +=sum_2RG;
-
-    if (results)
+	
+	if (results)
         cout << "Number of two-run states = " << count << endl;
 	return flag_minE2;
 }

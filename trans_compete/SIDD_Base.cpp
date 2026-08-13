@@ -836,11 +836,11 @@ void SIDD_Base::calc_profile()
     // V: The following lines is just a search of the maximum Gx for each transition, to substitute the Infinite.
 	maxGx = profile[1][0].get_ave_Gx();
 	for(int t=0; t<=Ns; t++) {
-        for(int j = 1; j < length_seq; j++){
-            if(maxGx < profile[t][j].get_ave_Gx()){
-                maxGx = profile[t][j].get_ave_Gx(); // find max Gx
-            }
-        }
+		for(int j = 1; j < length_seq; j++){
+			if(maxGx < profile[t][j].get_ave_Gx()){
+				maxGx = profile[t][j].get_ave_Gx(); // find max Gx
+			}
+		}
 	}
     // V: This is for the substitution.
 	for(int t=0; t<=Ns; t++) {
@@ -860,11 +860,11 @@ void SIDD_Base::sum_open()
 			sumn[t]+=profile[t][i].get_px();	
 		}
 	}
-    if (results) {
-        cout << "N_Melting = " << sumn[0] << endl;
-        cout << "N_Z = " << sumn[1] << endl;
-        cout << "N_Cruciform = " << sumn[2] << endl;
-    }
+	if (results) {
+		cout << "N_Melting = " << sumn[0] << endl;
+		cout << "N_Z = " << sumn[1] << endl;
+		cout << "N_Cruciform = " << sumn[2] << endl;
+	}
 }
 
 void SIDD_Base::get_column_header() {

@@ -70,8 +70,8 @@ bool SIDD_4R::Search_Low4RE()
 							if(Lst_OBE[n1][t1].begin()->get_energy() + min_RE[t2] + min_RE[t3]+ min_RE[t4] + minGres >= max_E)
 								continue;
 						for(int n2 = n1; n2 <= (window_size - n1)/3 ; n2++){
-							if (n1==n2 && t1==1 && t2==0) 
-								continue;
+                            if (n1==n2 && t1==1 && t2==0) 
+                                continue;
 								if(Lst_OBE[n1][t1].begin()->get_energy() + Lst_OBE[n2][t2].begin()->get_energy()+ min_RE[t3] + min_RE[t4] + minGres >= max_E)	
 									continue;
 							for(int n3 = n2; n3 <= (window_size - n1 - n2)/2; n3++){
