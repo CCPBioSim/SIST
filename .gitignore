@@ -48,6 +48,12 @@
 *.out
 *.app
 
+# SIST build outputs
+trans_three/qsidd
+trans_compete/qsidd
+trans_three/depend
+trans_compete/depend
+
 # Debug information files
 *.dwo
 
