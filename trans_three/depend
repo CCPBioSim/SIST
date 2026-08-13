@@ -1,9 +1,0 @@
-G_x.o: G_x.cpp G_x.h
-SIDD_1R.o: SIDD_1R.cpp SIDD_1R.h SIDD_Base.h G_x.h stat_1R.h
-SIDD_2R.o: SIDD_2R.cpp SIDD_2R.h SIDD_1R.h SIDD_Base.h G_x.h stat_1R.h
-SIDD_3R.o: SIDD_3R.cpp SIDD_3R.h SIDD_2R.h SIDD_1R.h SIDD_Base.h G_x.h \
- stat_1R.h
-SIDD_4R.o: SIDD_4R.cpp SIDD_4R.h SIDD_3R.h SIDD_2R.h SIDD_1R.h \
- SIDD_Base.h G_x.h stat_1R.h
-SIDD_Base.o: SIDD_Base.cpp SIDD_Base.h G_x.h
-stat_1R.o: stat_1R.cpp stat_1R.h
