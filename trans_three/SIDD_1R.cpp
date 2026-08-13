@@ -90,7 +90,7 @@ bool SIDD_1R::Search_Low1RE()
 
     ZsumB = sum_1RB + closed;
  	ZsumG = sum_1RG+alpha*alpha*K/2*closed;
-    if (write_profile && results)
+	if (write_profile && results)
         cout << "Number of one-run states = " << count << endl;
 	return flag_minE1;
 }

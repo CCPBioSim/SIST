@@ -32,7 +32,7 @@ SIDD_Base::SIDD_Base()
 	plasmid_seq = 0; 
 	en_cruciforms = 0;
 	profile = 0;
-	for(int m = MinWindowSize; m <= MaxWindowSize; m++)
+	for(int m = 0; m <= MaxInitialWindowSize; m++)
 		promatrix[m] = 0;
 	R = 8.314/(4.2*1000.0); // gas constant
 	C = 3.6; // stiffness constant 
@@ -240,8 +240,8 @@ double SIDD_Base::prepare_sequence(std::string sequence) {
 void SIDD_Base::prepare_cruciforms() {
     string str1 = cr_string;
     size_t found1 = 0;
-    int IR[2];
-    double energy;
+    int IR[2] = {0, 0};
+    double energy = 0.0;
     int pos1 = 0;
     int pos2 = 0;
     string str2;
@@ -267,15 +267,16 @@ void SIDD_Base::prepare_cruciforms() {
                 if(found2!=string::npos) {
                     str3 = str2.substr(pos2,found2-pos2);
                     pos2 = int(found2)+1;
-                    if (i==2) 
-                        energy=atof(str3.c_str());
-                    else 
+                    if (i == 2)
+                        energy = atof(str3.c_str());
+                    else if (i < 2)
                         IR[i] = atoi(str3.c_str());
                     i++;
                 }
             }
-            if (IR[1] <= MaxWindowSize)
-		en_cruciforms[IR[0]-1][IR[1]] = energy;
+            if (i == 3 && IR[0] > 0 && IR[0] <= length_seq &&
+                IR[1] > 0 && IR[1] <= MaxWindowSize)
+                en_cruciforms[IR[0]-1][IR[1]] = energy;
             pos1 = int(found1)+1;
         }
     }
@@ -836,17 +837,17 @@ void SIDD_Base::calc_profile()
 
 void SIDD_Base::sum_open()
 {
- double sumn=0.0;
- for(int i = 0; i < length_seq; i++)
-    sumn+=profile[i].get_px();
-    if (results) {
-        if (EnergyType == Z_DNA)
-            cout << "Number of Z-DNA bases = " << sumn << endl;
-        else if (EnergyType == Cruciform)
-            cout << "Number of cruciform bases = " << sumn << endl;
-        else
-            cout << "Number of melted bases = " << sumn << endl;
-    }
+	double sumn=0.0;
+	for(int i = 0; i < length_seq; i++)
+ 	sumn+=profile[i].get_px();
+	if (results) {
+		if (EnergyType == Z_DNA)
+			cout << "Number of Z-DNA bases = " << sumn << endl;
+		else if (EnergyType == Cruciform)
+			cout << "Number of cruciform bases = " << sumn << endl;
+		else
+			cout << "Number of melted bases = " << sumn << endl;
+	}
 }
 
 void SIDD_Base::get_column_header()
@@ -955,7 +956,7 @@ void SIDD_Base::show_parameter()
 		cout << "Energetics: Melting - nearest neighbor energetics\n";
 	else if (EnergyType == Z_DNA)
 		cout << "Transition: Z-DNA\n";
-    else if (EnergyType == Cruciform)
+	else if (EnergyType == Cruciform)
         cout << "Transition: Cruciform\n";
 	if(MoleculeType == Circular)
 		cout << "Molecule type: circular DNA\n";

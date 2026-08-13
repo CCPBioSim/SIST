@@ -32,7 +32,7 @@ SIDD_Base::SIDD_Base()
     en_cruciforms = 0;
 	for (int t=0; t<=Ns; t++) {
 		profile[t] = 0;
-	for(int m = MinWindowSize; m <= MaxWindowSize; m++) {
+	for(int m = 0; m <= MaxInitialWindowSize; m++) {
 		promatrix[m][t] = 0;
 		}
 	}
@@ -246,8 +246,8 @@ double SIDD_Base::prepare_sequence(std::string sequence) {
 void SIDD_Base::prepare_cruciforms() {
     string str1 = cr_string;
     size_t found1 = 0;
-    int IR[2];
-    double energy;
+    int IR[2] = {0, 0};
+    double energy = 0.0;
     int pos1 = 0;
     int pos2 = 0;
     string str2;
@@ -276,15 +276,16 @@ void SIDD_Base::prepare_cruciforms() {
                 if(found2!=string::npos) {
                     str3 = str2.substr(pos2,found2-pos2);
                     pos2 = int(found2)+1;
-                    if (i==2) 
-                        energy=atof(str3.c_str());
-                    else 
+                    if (i == 2)
+                        energy = atof(str3.c_str());
+                    else if (i < 2)
                         IR[i] = atoi(str3.c_str());
                     i++;
                 }
             }
-            if (IR[1] <= MaxWindowSize)
-	    en_cruciforms[IR[0]-1][IR[1]] = energy;
+            if (i == 3 && IR[0] > 0 && IR[0] <= length_seq &&
+                IR[1] > 0 && IR[1] <= MaxWindowSize)
+                en_cruciforms[IR[0]-1][IR[1]] = energy;
             pos1 = int(found1)+1;
         }
     }
@@ -835,11 +836,11 @@ void SIDD_Base::calc_profile()
     // V: The following lines is just a search of the maximum Gx for each transition, to substitute the Infinite.
 	maxGx = profile[1][0].get_ave_Gx();
 	for(int t=0; t<=Ns; t++) {
-        for(int j = 1; j < length_seq; j++){
-            if(maxGx < profile[t][j].get_ave_Gx()){
-                maxGx = profile[t][j].get_ave_Gx(); // find max Gx
-            }
-        }
+		for(int j = 1; j < length_seq; j++){
+			if(maxGx < profile[t][j].get_ave_Gx()){
+				maxGx = profile[t][j].get_ave_Gx(); // find max Gx
+			}
+		}
 	}
     // V: This is for the substitution.
 	for(int t=0; t<=Ns; t++) {
@@ -859,11 +860,11 @@ void SIDD_Base::sum_open()
 			sumn[t]+=profile[t][i].get_px();	
 		}
 	}
-    if (results) {
-        cout << "N_Melting = " << sumn[0] << endl;
-        cout << "N_Z = " << sumn[1] << endl;
-        cout << "N_Cruciform = " << sumn[2] << endl;
-    }
+	if (results) {
+		cout << "N_Melting = " << sumn[0] << endl;
+		cout << "N_Z = " << sumn[1] << endl;
+		cout << "N_Cruciform = " << sumn[2] << endl;
+	}
 }
 
 void SIDD_Base::get_column_header() {

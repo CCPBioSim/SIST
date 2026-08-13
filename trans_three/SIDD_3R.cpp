@@ -100,7 +100,7 @@ bool SIDD_3R::Search_Low3RE()
 			}
 		}
 	}
-    if (results)
+	if (results)
         cout << "Number of three-run states = " << count << endl;
 	StatesInThreeRuns = (long)count;
 	ZsumB += sum_3RB;

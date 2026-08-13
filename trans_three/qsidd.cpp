@@ -160,10 +160,10 @@ int main(int argc, char* argv[])
         }
         sidd.set_Flag_PEA(energy);
 	}
-	
-	if (!sidd.initializer(dnasequence.str().c_str(),length)) {
+    
+    if (!sidd.initializer(dnasequence.str().c_str(),length)) {
 		cerr << "sidd.initializer failed" << endl;
-		exit(1);
+        exit(1);
 	}
     if (sidd.get_Flag_PEA()) sidd.assign_pea(energy);
 
@@ -171,7 +171,7 @@ int main(int argc, char* argv[])
         cout << "WARNING: threshold is too small, results may be inaccurate"<< endl;
     if (threshold > 15)
         cout << "WARNING: threshold is too high, execution time may be very long"<< endl;
-	if (stress_level > 0.15 || stress_level < -0.15)
+    if (stress_level > 0.15 || stress_level < -0.15)
         cout << "WARNING: superhelical density is outside of physiological range"<< endl;
     if (temperature < 220 || temperature > 320)
         cout << "WARNING: temperature is outside of physiological range"<< endl;
