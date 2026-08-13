@@ -32,7 +32,7 @@ SIDD_Base::SIDD_Base()
 	plasmid_seq = 0; 
 	en_cruciforms = 0;
 	profile = 0;
-	for(int m = MinWindowSize; m <= MaxWindowSize; m++)
+	for(int m = 0; m <= MaxInitialWindowSize; m++)
 		promatrix[m] = 0;
 	R = 8.314/(4.2*1000.0); // gas constant
 	C = 3.6; // stiffness constant 

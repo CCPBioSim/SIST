@@ -32,7 +32,7 @@ SIDD_Base::SIDD_Base()
     en_cruciforms = 0;
 	for (int t=0; t<=Ns; t++) {
 		profile[t] = 0;
-	for(int m = MinWindowSize; m <= MaxWindowSize; m++) {
+	for(int m = 0; m <= MaxInitialWindowSize; m++) {
 		promatrix[m][t] = 0;
 		}
 	}
