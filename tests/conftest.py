@@ -66,14 +66,10 @@ def require_success(
     )
 
 
-@pytest.fixture(scope="session")
-def built_sist(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """
-    Copy and build SIST in a temporary directory.
-
-    This ensures the tests use executables built from the maintained source
-    without modifying the repository working tree.
-    """
+def build_sist(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Path:
+    """Copy and build SIST in a temporary directory."""
 
     build_root = tmp_path_factory.mktemp("sist-build")
     working_copy = build_root / "SIST"
@@ -121,39 +117,73 @@ def built_sist(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return working_copy
 
 
+@pytest.fixture(scope="session")
+def sist_command(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> list[str]:
+    """
+    Return the SIST command under test.
+
+    During conda-build testing, use the installed package. Otherwise build
+    and test the maintained source tree.
+    """
+
+    if os.environ.get("CONDA_BUILD_STATE") == "TEST":
+        executable = shutil.which("sist")
+
+        if executable is None:
+            pytest.fail(
+                "The installed sist command was not found in PATH",
+                pytrace=False,
+            )
+
+        return [executable]
+
+    built_sist = build_sist(tmp_path_factory)
+
+    return [
+        "perl",
+        str(built_sist / "master.pl"),
+    ]
+
+
 def run_sist_calculation(
-    built_sist: Path,
+    sist_command: list[str],
+    tmp_path_factory: pytest.TempPathFactory,
     *,
     name: str,
     algorithm: str,
 ) -> SistRun:
     """Run one SIST calculation using the regression test sequence."""
 
-    source_input = built_sist / "tests" / "data" / "pbr322.toy.fa"
-    runtime_input = built_sist / "pbr322.toy.fa"
+    runtime_directory = tmp_path_factory.mktemp(f"sist-{name}")
+
+    source_input = (
+        REPOSITORY_ROOT
+        / "tests"
+        / "data"
+        / "pbr322.toy.fa"
+    )
+    runtime_input = runtime_directory / "pbr322.toy.fa"
 
     shutil.copy2(source_input, runtime_input)
 
-    output_directory = built_sist / "test-results"
-    output_directory.mkdir(exist_ok=True)
-
-    output_path = output_directory / f"{name}.txt"
+    output_path = runtime_directory / f"{name}.txt"
 
     result = run_command(
         [
-            "perl",
-            "master.pl",
+            *sist_command,
             "-f",
             runtime_input.name,
             "-a",
             algorithm,
             "-o",
-            str(output_path.relative_to(built_sist)),
+            output_path.name,
             "-b",
             "-p",
             "-r",
         ],
-        cwd=built_sist,
+        cwd=runtime_directory,
     )
 
     return SistRun(
@@ -165,11 +195,15 @@ def run_sist_calculation(
 
 
 @pytest.fixture(scope="session")
-def competition_run(built_sist: Path) -> SistRun:
+def competition_run(
+    sist_command: list[str],
+    tmp_path_factory: pytest.TempPathFactory,
+) -> SistRun:
     """Run the SIST competition calculation once."""
 
     return run_sist_calculation(
-        built_sist,
+        sist_command,
+        tmp_path_factory,
         name="competition",
         algorithm="A",
     )
@@ -181,14 +215,16 @@ def competition_run(built_sist: Path) -> SistRun:
 )
 def transition_run(
     request: pytest.FixtureRequest,
-    built_sist: Path,
+    sist_command: list[str],
+    tmp_path_factory: pytest.TempPathFactory,
 ) -> SistRun:
     """Run each supported individual SIST transition calculation once."""
 
     name, algorithm = request.param
 
     return run_sist_calculation(
-        built_sist,
+        sist_command,
+        tmp_path_factory,
         name=name,
         algorithm=algorithm,
     )
