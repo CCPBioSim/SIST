@@ -11,11 +11,19 @@ import pytest
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
+SIST_TRANSITIONS = (
+    pytest.param(("melting", "M"), id="melting"),
+    pytest.param(("z-dna", "Z"), id="z-dna"),
+    pytest.param(("cruciform", "C"), id="cruciform"),
+)
+
 
 @dataclass(frozen=True)
-class CompetitionRun:
-    """Result of running the SIST competition example."""
+class SistRun:
+    """Result of running a SIST calculation."""
 
+    name: str
+    algorithm: str
     process: subprocess.CompletedProcess[str]
     output_path: Path
 
@@ -64,7 +72,7 @@ def built_sist(tmp_path_factory: pytest.TempPathFactory) -> Path:
     Copy and build SIST in a temporary directory.
 
     This ensures the tests use executables built from the maintained source
-    without overwriting the inherited binaries in the repository.
+    without modifying the repository working tree.
     """
 
     build_root = tmp_path_factory.mktemp("sist-build")
@@ -113,9 +121,13 @@ def built_sist(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return working_copy
 
 
-@pytest.fixture(scope="session")
-def competition_run(built_sist: Path) -> CompetitionRun:
-    """Run the documented competition example once."""
+def run_sist_calculation(
+    built_sist: Path,
+    *,
+    name: str,
+    algorithm: str,
+) -> SistRun:
+    """Run one SIST calculation using the regression test sequence."""
 
     source_input = built_sist / "tests" / "data" / "pbr322.toy.fa"
     runtime_input = built_sist / "pbr322.toy.fa"
@@ -123,9 +135,9 @@ def competition_run(built_sist: Path) -> CompetitionRun:
     shutil.copy2(source_input, runtime_input)
 
     output_directory = built_sist / "test-results"
-    output_directory.mkdir()
+    output_directory.mkdir(exist_ok=True)
 
-    output_path = output_directory / "competition.txt"
+    output_path = output_directory / f"{name}.txt"
 
     result = run_command(
         [
@@ -134,7 +146,7 @@ def competition_run(built_sist: Path) -> CompetitionRun:
             "-f",
             runtime_input.name,
             "-a",
-            "A",
+            algorithm,
             "-o",
             str(output_path.relative_to(built_sist)),
             "-b",
@@ -144,7 +156,39 @@ def competition_run(built_sist: Path) -> CompetitionRun:
         cwd=built_sist,
     )
 
-    return CompetitionRun(
+    return SistRun(
+        name=name,
+        algorithm=algorithm,
         process=result,
         output_path=output_path,
+    )
+
+
+@pytest.fixture(scope="session")
+def competition_run(built_sist: Path) -> SistRun:
+    """Run the SIST competition calculation once."""
+
+    return run_sist_calculation(
+        built_sist,
+        name="competition",
+        algorithm="A",
+    )
+
+
+@pytest.fixture(
+    scope="session",
+    params=SIST_TRANSITIONS,
+)
+def transition_run(
+    request: pytest.FixtureRequest,
+    built_sist: Path,
+) -> SistRun:
+    """Run each supported individual SIST transition calculation once."""
+
+    name, algorithm = request.param
+
+    return run_sist_calculation(
+        built_sist,
+        name=name,
+        algorithm=algorithm,
     )
