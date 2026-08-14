@@ -21,12 +21,13 @@ requirements:
     - irf >=3.08,<3.09
 
 test:
+  requires:
+    - python >=3.14
+    - pytest >=9,<10
+
   source_files:
-    - tests/data/pbr322.toy.fa
-    - tests/reference/v1.0.0/melting.txt
-    - tests/reference/v1.0.0/z-dna.txt
-    - tests/reference/v1.0.0/cruciform.txt
-    - tests/reference/v1.0.0/competition.rebuilt.txt
+    - tests
+    - pyproject.toml
 
 about:
   home: https://github.com/CCPBioSim/SIST
