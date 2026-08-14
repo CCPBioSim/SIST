@@ -1,0 +1,42 @@
+{% set name = "sist" %}
+{% set version = "0.0.0" %}
+
+package:
+  name: {{ name }}
+  version: {{ version }}
+
+source:
+  path: ..
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - make
+
+  run:
+    - perl
+    - irf >=3.08,<3.09
+
+test:
+  source_files:
+    - tests/data/pbr322.toy.fa
+    - tests/reference/v1.0.0/melting.txt
+    - tests/reference/v1.0.0/z-dna.txt
+    - tests/reference/v1.0.0/cruciform.txt
+    - tests/reference/v1.0.0/competition.rebuilt.txt
+
+about:
+  home: https://github.com/CCPBioSim/SIST
+  license: MIT
+  license_family: MIT
+  license_file: LICENSE
+  license_url: https://github.com/CCPBioSim/SIST/blob/main/LICENSE
+  summary: Stress-Induced Structural Transitions in superhelical DNA.
+  description: >
+    SIST calculates stress-induced structural transition probabilities in
+    superhelical DNA, including strand separation, Z-DNA formation,
+    cruciform extrusion, and competition between these transitions.
+  dev_url: https://github.com/CCPBioSim/SIST

@@ -21,8 +21,7 @@ if($#ARGV < 2) {
 	die $usage;
 }
 
-#my $code = "irf305.macos.exe";
-my $code = "irf308.linux.exe";
+my $code = "irf";
 
 my $temp = $ARGV[0]; #temperature
 my $shape = $ARGV[1]; #linear or circular
@@ -110,7 +109,7 @@ sub get_result {
     my ($in_file,$shape) = @_;
     my $skip = 0;
     #PARAMETERS: Match: $match Mismatch: $mismatch Delta: $delta pm: $pm pi: $pi minscore:$minscore maxlength: $maxlength maxloop: $maxloop \n";
-    system("./$code $in_file $match $mismatch $delta $pm $pi $minscore $maxlength $maxloop > /dev/null");
+    system("$code $in_file $match $mismatch $delta $pm $pi $minscore $maxlength $maxloop > /dev/null");
     my $num_files = `ls -l $in_file.$match.$mismatch.$delta.$pm.$pi.$minscore.$maxlength.$maxloop.*.txt.html | wc -l`;
     for(my $i = 1; $i <= $num_files; $i++) {
         my $out_file = "$in_file.$match.$mismatch.$delta.$pm.$pi.$minscore.$maxlength.$maxloop.$i.txt.html";
@@ -275,7 +274,7 @@ sub get_IR {
 	my @la = split("--",$rrl[0]);
 	my @ra = split("--",$rrl[1]);
 	my $start = $la[0]; #start position of IR
-	my $end = $ra[1]; #end position of IR
+	my $end = $ra[1]; #end of IR
 	my $s_loop = $la[1]+1; #start position of loop
     my $l_IR = $end-$start+1; #length of IR
 	return ($l_loop,$s_loop,$start,$end,$l_IR);
