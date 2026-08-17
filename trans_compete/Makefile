@@ -27,13 +27,13 @@ default:
 	make gcc
 
 $(APP): $(OBJ) $(OBJECTS)
-	$(CC) -o $(APP) $(CFLAGS) $(OBJ) $(OBJECTS) -lm
+	$(CC) $(LDFLAGS) -o $(APP) $(CFLAGS) $(OBJ) $(OBJECTS) -lm
 
 clean:
 	rm -f *.o $(APP)
 
 depend: $(OBJECTS:.o=.cpp)
-	gcc -MM $^ > $@
+	$(CXX) -MM $^ > $@
 
 test:
 	./qsidd example.fasta 
@@ -52,7 +52,7 @@ tar:
 #################
 
 gcc:
-	make $(APP) CC="g++" CPPFLAGS="-O2 -Wall"
+	make $(APP) CC="$(CXX)" CPPFLAGS="-O2 -Wall"
 
 
 ###################

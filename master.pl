@@ -5,6 +5,7 @@
 
 use strict; use warnings;
 use Getopt::Long;
+use FindBin qw($RealBin);
 my ($file,$trans, $out_file);
 my $temp = 310;
 my $sig = 0.06;
@@ -72,8 +73,8 @@ if($c) {
 
 
 my @name = split("/",$file);
-my $single_exe = "trans_three/qsidd";
-my $compete_exe = "trans_compete/qsidd";
+my $single_exe = "$RealBin/trans_three/qsidd";
+my $compete_exe = "$RealBin/trans_compete/qsidd";
 
 my $output_IR;
 if ($trans eq "M") {
@@ -85,7 +86,7 @@ if ($trans eq "Z") {
     $output_IR = `$single_exe $b $p $r $c -T $temp -s $sig -i $salt -t $theta -Z -f $file`;
 }
 if ($trans eq "C" or $trans eq "A") {
-    my $code_IR = "IR_finder.pl";
+    my $code_IR = "$RealBin/IR_finder.pl";
     my $IR_results = `perl $code_IR $temp $shape $file`; #run IR_finder
     if($trans eq "C") {
         #run single transition algorithm for cruciforms

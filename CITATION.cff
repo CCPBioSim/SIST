@@ -1,0 +1,36 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: SIST
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+
+authors:
+
+repository-code: 'https://github.com/CCPBioSim/SIST'
+url: 'https://sist.readthedocs.io/en/latest/'
+
+abstract: >-
+  SIST (Stress-Induced Structural Transitions) calculates
+  stress-induced structural transition probabilities in
+  superhelical DNA, including strand separation, Z-DNA
+  formation, cruciform extrusion, and competition between
+  these transitions.
+
+keywords:
+  - DNA
+  - superhelical DNA
+  - DNA supercoiling
+  - strand separation
+  - Z-DNA
+  - cruciform extrusion
+  - structural transitions
+  - statistical mechanics
+  - biomolecular simulations
+
+license: MIT
+version: 0.0.0
+date-released: '2026-08-14'
