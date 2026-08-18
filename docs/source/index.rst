@@ -1,19 +1,47 @@
-.. SIST documentation master file, created by
-   sphinx-quickstart on Thu Jan 22 14:14:31 2026.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+SIST
+====
 
-SIST documentation
-==================
+SIST (Stress-Induced Structural Transitions) is a program for analysing
+stress-induced structural transitions in superhelical DNA with a specified
+base sequence.
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
+SIST supports calculations for:
 
+* strand separation (melting/SIDD)
+* Z-DNA formation
+* cruciform extrusion
+* competition between melting, Z-DNA, and cruciform transitions
+
+SIST 1.0.0 provides a maintained Conda distribution, an installed ``sist``
+command, and regression testing against reference scientific outputs.
+
+Quick start
+-----------
+
+Install SIST with Conda:
+
+.. code-block:: bash
+
+   conda install -c ccpbiosim -c conda-forge -c bioconda sist
+
+Run a melting calculation:
+
+.. code-block:: bash
+
+   sist -a M -f sequence.fa
+
+Run a competition calculation and write the result to a file:
+
+.. code-block:: bash
+
+   sist -a A -f sequence.fa -o results.txt
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Contents
 
    user-guide
-
+   installation
+   source-usage
+   development
+   citation
