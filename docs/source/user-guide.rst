@@ -1,127 +1,196 @@
-===============================================================
-SIST: Stress-Induced Structural Transitions in superhelical DNA
-===============================================================
+User Guide
+==========
 
 Purpose of SIST
-===============
+---------------
 
-The codes in this repository are for analyzing three types of structural transitions in superhelical DNA molecules of specified base sequences and kilobase lengths.  These are strand separation, BZ transitions and cruciform extrusion.  More types of transitions may be added as their energetics become known.  The statistical mechanical methods and algorithms used in these analyses are described in the papers cited below. 
+SIST analyses three types of structural transition in superhelical DNA
+molecules of specified base sequence and length:
 
-Codes
-=====
+* strand separation
+* B-Z transitions
+* cruciform extrusion
 
-1. *master.pl*: This is a pipeline to run all algorithms.
+The statistical-mechanical methods and algorithms used in these analyses are
+described in the publications listed on the Citing SIST page.
 
-2. *IR_finder.pl*: analyzes the output of Inverted Repeat Finder (see below), and outputs a list of inverted repeats and their start positions, all their possible extrusion lengths, and cruciform formation energies for each such length.
+Running SIST
+------------
 
-3. *trans_three*: C++ code containing the algorithms for analyzing strand separation,  Z-DNA, and cruciform extrusion independently.
+When installed through Conda, SIST is run with the ``sist`` command.
 
-4. *trans_compete*: C++ code containing the algorithm for analyzing the competition between strand separation, Z-DNA, and cruciform extrusion.
+The general form is:
 
-Instructions for running *master.pl*
-------------------------------------
+.. code-block:: bash
 
-The code *master.pl* contains a pipeline that allows the user to run either trans_three or trans_compete with various parameters provided in the menu of the code. Run “perl master.pl” for more detailed instructions and to see all available parameters.  Sequence file fasta format is recommended. If another format is provided, the sequence is converted into an appropriate format.  Multiple sequences in one file are not permitted.
+   sist -f <sequence_file> -a <algorithm_type> [options]
 
-Algorithm types:
-----------------
+Input sequences
+---------------
 
-1. -a M: melting transition only (SIDD).
+A sequence file is supplied with the ``-f`` option. FASTA format is
+recommended.
 
-2. -a Z: Z-DNA transition only.
+A single input file must contain only one sequence. SIST converts the supplied
+sequence into the format required by the selected calculation.
 
-3. -a C: cruciform transition only.
+For cruciform and competition calculations, the input sequence should be in
+the current working directory and supplied by file name rather than by a path.
+This is required by the IRF integration used by SIST 1.0.0.
 
-4. -a A: competition between melting, Z-DNA, and cruciform transitions.
+Calculation modes
+-----------------
 
+``-a M``
+   Melting transition only (SIDD).
 
-To compile and run follow these steps:
---------------------------------------
+``-a Z``
+   Z-DNA transition only.
 
-1. Download *master.pl*, *IR_finder.pl*, trans_three/ and trans_compete/ folders into a working directory.
+``-a C``
+   Cruciform transition only.
 
-2. Compile the C++ codes: go to both trans_three/ and trans_compete/ directories, and type **make** on the command line.
+``-a A``
+   Competition between melting, Z-DNA, and cruciform transitions.
 
-3. Download Inverted Repeats Finder (IRF) that suits your operating system and move it to your working directory. This code can be downloaded here: https://github.com/Benson-Genomics-Lab/IRF/releases/tag/IRFv3.09.
+Cruciform and competition calculations use Inverted Repeats Finder (IRF).
+When SIST is installed through Conda, IRF is installed automatically as a
+runtime dependency.
 
-4. Ignore this step if you are a Linux user.  Otherwise, replace the name of IRF executable in the line “my $code = "irf308.linux.exe;" in IR_finder.pl with the executable appropriate for your operating system.
+Examples
+--------
 
-5. Move a sequence file you want to analyze into the working directory.
+Melting
+~~~~~~~
 
-6. To execute the melting transition (SIDD) with default parameters, type:  perl master.pl -a M -f sequence_file.
+Run a melting calculation using the default parameters:
 
-**More examples of step 6 above:**
+.. code-block:: bash
 
-Competition with default parameters and a specified output file: 
+   sist -a M -f sequence.fa
 
+Z-DNA
+~~~~~
 
-```ruby
-perl master.pl -a A -f sequence_file -o output_file
-```
+Run a Z-DNA calculation:
 
-Competition code at superhelix density of σ = -0.07 for a circular plasmid, displaying all available output:
+.. code-block:: bash
 
-```ruby
-perl master.pl -a A -s 0.07 -c -b -p -r -f sequence_file
-```
+   sist -a Z -f sequence.fa
 
-Usage of C++ codes
-==================
+Cruciform
+~~~~~~~~~
 
-Type make on command line to compile.  Once this is done, qsidd is the executable. 
-Run “./qsidd” for more detailed instructions and to see all available parameters. To run with default parameters: ./qsidd -f sequence_file. 
+Run a cruciform calculation:
 
-The following steps are to run cruciform analysis with trans_three and the competition analysis with trans_compete:
+.. code-block:: bash
 
-1. First run *IR_finder.pl*:
-```ruby
-perl IR_finder.pl temperature shape sequence_file
-```
+   sist -a C -f sequence.fa
 
-2. For cruciforms using trans_three run: 
-```ruby
-./qsidd -C -X “string” -f sequence_file
-```
+Competition
+~~~~~~~~~~~
 
-3. For competition using trans_compete run: 
-```ruby
-./qsidd -X “string” -f sequence_file
-```
+Run a competition calculation using the default parameters:
 
-Here “string” is the output from *IR_finder.pl*.  Run “ perl IR_finder.pl” for a more detailed explanation of step 1.  Note: *master.pl* can do the above workflow automatically.
+.. code-block:: bash
+
+   sist -a A -f sequence.fa
+
+Write the output to a file:
+
+.. code-block:: bash
+
+   sist -a A -f sequence.fa -o output.txt
+
+Run the competition calculation for a circular plasmid at a superhelical
+density corresponding to -0.07 and include the additional base, parameter, and
+ensemble-average output:
+
+.. code-block:: bash
+
+   sist -a A -s 0.07 -c -b -p -r -f sequence.fa
+
+Command-line options
+--------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 82
+
+   * - Option
+     - Description
+   * - ``-f FILE``
+     - Required. Specify the input sequence file.
+   * - ``-a MODE``
+     - Required. Select ``M``, ``Z``, ``C``, or ``A``.
+   * - ``-T VALUE``
+     - Set the temperature in kelvin. The default is 310 K.
+   * - ``-s VALUE``
+     - Set the superhelical density. The default calculation corresponds to
+       -0.06. The command-line convention uses a value such as ``0.07`` for a
+       reported stress level of -0.07.
+   * - ``-i VALUE``
+     - Set the ionic strength. The default is 0.01 M.
+   * - ``-th VALUE``
+     - Set the energy threshold. The default is 12 kcal/mol.
+   * - ``-c``
+     - Treat the molecule as circular. The default is linear.
+   * - ``-n``
+     - Use nearest-neighbour melting energetics. The default is copolymeric
+       melting energetics.
+   * - ``-b``
+     - Include the base at each sequence position in the output.
+   * - ``-p``
+     - Include calculation parameters in the output.
+   * - ``-r``
+     - Include ensemble-average results in the output.
+   * - ``-o FILE``
+     - Write the selected SIST output to ``FILE``.
+
+.. note::
+
+   The SIST 1.0.0 parser accepts uppercase ``-T`` for temperature.
+
+Output
+------
+
+Without ``-o``, the selected SIST output is written to standard output.
+
+With ``-o FILE``, the selected output is written to the specified file:
+
+.. code-block:: bash
+
+   sist -a M -f sequence.fa -o melting.txt
+
+The exact output sections depend on the calculation mode and selected options.
+The ``-b``, ``-p``, and ``-r`` options add base-pair, parameter, and
+ensemble-average information respectively.
+
+IRF may print progress information while cruciform or competition calculations
+are running.
 
 Algorithm limitations and recommended parameter ranges
-======================================================
+------------------------------------------------------
 
-If the codes are executed outside of the ranges listed below, a warning will be printed in the output.  We advise that you do not perform the analysis outside the recommended guidelines. Master.pl options corresponding to each parameter are listed below.
+SIST reports warnings when calculations are performed outside the recommended
+parameter ranges.
 
+.. warning::
 
-> [!WARNING]
-> Algorithm warnings
+   Calculations outside these ranges may be inaccurate, may fall outside
+   physiological conditions, or may require substantially longer execution
+   times.
 
-1. Sequence length in input sequence file should be greater than 1,500 and less than 10,000.
+1. The input sequence length should be greater than 1,500 base pairs and less
+   than 10,000 base pairs.
 
-2. Energy Threshold (-th) below 9 many yield inaccurate results, and -th above 15 many results in very long execution times.
+2. Energy thresholds (``-th``) below 9 may yield inaccurate results, while
+   thresholds above 15 may result in very long execution times.
 
-3. Absolute value of superhelical density (-s) greater than 0.15 may be outside of physiological range.
+3. An absolute superhelical density greater than 0.15 may be outside the
+   physiological range.
 
-4. Temperatures (-t) less than 220 K and greater than 320 K may be outside physiological range.
+4. Temperatures below 220 K or above 320 K may be outside the physiological
+   range.
 
-5. Salt concentration less than 0.0001 M may be outside physiological range.
-
-Citations
-=========
-
-When using these algorithms you must cite the first paper below, and some or all of the others, depending on which types of analyses you perform:
-
-Zhabinskaya, D., Madden, S., & Benham, C. J. (2015). SIST: stress-induced structural transitions in superhelical DNA. Bioinformatics, 31(3), 421-422.
-
-Fye, R. M. and Benham, C. J. (1999), “Exact method for numerically analyzing a model of local denaturation in superhelically stressed DNA”, Phys Rev E, 59, 3408-3426.
-
-Zhabinskaya, D. and Benham, C. J. (2011), “Theoretical Analysis of the Stress Induced BZ Transition in Superhelical DNA”, PLoS Comput Biol, 7, 1-14.
-
-Zhabinskaya, D. and Benham, C. J. (2013), “Competitive superhelical transitions involving cruciform extrusion”, Nucleic Acids Res, 41(21), 9610-9621.
-
-## Contact Information
-
-For questions or problems, please contact either Dina Zhabinskaya (dzhabinskaya@ucdavis.edu), Craig Benham (cjbenham@ucdavis.edu), or Sally Madden (sallymadden@gmail.com).
+5. Salt concentrations below 0.0001 M may be outside the physiological range.
