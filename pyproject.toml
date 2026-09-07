@@ -10,6 +10,17 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
 
+authors = [
+    { name = "Craig Benham", email = "cjbenham@ucdavis.edu" },
+    { name = "Dina Zhabinskaya", email = "dzhabinskaya@ucdavis.edu" },
+    { name = "Sally Madden" },
+    { name = "Richard M. Fye" },
+    { name = "Victor Velasco-Berrelleza", email = "v.velascoberrelleza@sheffield.ac.uk" },
+    { name = "Jas Kalayan", email = "jas.kalayan@stfc.ac.uk" },
+    { name = "Sarah Harris", email = "sarah.harris@sheffield.ac.uk" },
+    { name = "James Gebbie-Rayet", email = "james.gebbie@stfc.ac.uk" },
+]
+
 maintainers = [
     { name = "Harry Swift", email = "harry.swift@stfc.ac.uk" },
 ]
