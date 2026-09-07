@@ -4,6 +4,11 @@
 
 The codes in this repository are for analyzing three types of structural transitions in superhelical DNA molecules of specified base sequences and kilobase lengths.  These are strand separation, BZ transitions and cruciform extrusion.  More types of transitions may be added as their energetics become known.  The statistical mechanical methods and algorithms used in these analyses are described in the papers cited below. 
 
+<p align="center">
+    <img src="docs/source/_static/logos/SIST-logo-white-text.svg#gh-dark-mode-only" alt="SIST logo" width="300"/>
+    <img src="docs/source/_static/logos/SIST-logo-black-text.svg#gh-light-mode-only" alt="SIST logo" width="300"/>
+</p>
+
 ## Citations
 
 When using these algorithms you must cite the first paper below, and some or all of the others, depending on which types of analyses you perform:
