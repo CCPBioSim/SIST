@@ -9,6 +9,45 @@ message: >-
 type: software
 
 authors:
+  - given-names: Craig
+    family-names: Benham
+    email: 'cjbenham@ucdavis.edu'
+    affiliation: 'UC Davis Genome Center and Department of Mathematics, University of California, Davis, CA 95616, USA.'
+    affiliation: 'https://orcid.org/0009-0005-4610-2402'
+  - given-names: Dina
+    family-names: Zhabinskaya
+    email: dzhabinskaya@ucdavis.edu
+    affiliation: 'UC Davis Genome Center and Department of Mathematics, University of California, Davis, CA 95616, USA.'
+  - given-names: Sally
+    family-names: Madden
+    affiliation: 'UC Davis Genome Center and Department of Mathematics, University of California, Davis, CA 95616, USA.'
+  - given-names: Richard M.
+    family-names: Fye
+  - given-names: Victor
+    family-names: Velasco-Berrelleza
+    email: v.velascoberrelleza@sheffield.ac.uk
+    affiliation: 'School of Mathematical and Physical Sciences, University of Sheffield, United Kingdom'
+    orcid: 'https://orcid.org/0000-0002-4809-6254'
+  - given-names: Harry
+    family-names: Swift
+    email: harry.swift@stfc.ac.uk
+    affiliation: 'Scientific Computing Department, STFC Daresbury Laboratory, Warrington WA4 4AD, United Kingdom'
+    orcid: 'https://orcid.org/0009-0007-3323-753X'
+  - given-names: Jas
+    family-names: Kalayan
+    email: jas.kalayan@stfc.ac.uk
+    affiliation: 'Scientific Computing Department, STFC Daresbury Laboratory, Warrington WA4 4AD, United Kingdom'
+    orcid: 'https://orcid.org/0000-0002-6833-1864'
+  - given-names: Sarah
+    family-names: Harris
+    email: sarah.harris@sheffield.ac.uk
+    affiliation: School of Mathematical and Physical Sciences, University of Sheffield, United Kingdom
+    orcid: 'https://orcid.org/0000-0002-2812-1651'
+  - given-names: James
+    family-names: Gebbie-Rayet
+    email: james.gebbie@stfc.ac.uk
+    affiliation: 'Scientific Computing Department, STFC Daresbury Laboratory, Warrington WA4 4AD, United Kingdom'
+    orcid: 'https://orcid.org/0000-0001-8271-3431'
 
 repository-code: 'https://github.com/CCPBioSim/SIST'
 url: 'https://sist.readthedocs.io/en/latest/'
