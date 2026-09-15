@@ -5,7 +5,7 @@ SIST: Stress-Induced Structural Transitions in superhelical DNA
 |----------------|--------|
 | **Build**      | [![PR Checks](https://github.com/CCPBioSim/SIST/actions/workflows/pr.yaml/badge.svg)](https://github.com/CCPBioSim/SIST/actions/workflows/pr.yaml) |
 | **Documentation** | [![Docs - Status](https://app.readthedocs.org/projects/sist/badge/?version=latest)](https://sist.readthedocs.io/en/latest/?badge=latest) |
-| **Citation**      |  |
+| **Citation**      | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22753478.svg)](https://doi.org/10.5281/zenodo.22753478) |
 | **Anaconda**       | [![Anaconda.org](https://anaconda.org/CCPBioSim/sist/badges/version.svg)](https://anaconda.org/CCPBioSim/sist/) [![Last Updated](https://anaconda.org/CCPBioSim/sist/badges/latest_release_date.svg)](https://anaconda.org/CCPBioSim/sist) [![Platforms](https://anaconda.org/CCPBioSim/sist/badges/platforms.svg)](https://anaconda.org/CCPBioSim/sist) [![License](https://anaconda.org/CCPBioSim/sist/badges/license.svg)](https://anaconda.org/CCPBioSim/sist) [![Downloads](https://anaconda.org/CCPBioSim/sist/badges/downloads.svg)](https://anaconda.org/CCPBioSim/sist)|
 | **Quality**    | [![Coverage Status](https://coveralls.io/repos/github/CCPBioSim/SIST/badge.svg?branch=main)](https://coveralls.io/github/CCPBioSim/SIST?branch=main) |
 
