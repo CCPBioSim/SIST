@@ -59,8 +59,8 @@ Build both C++ components from the repository root:
 
 .. code-block:: bash
 
-   make -C trans_three
-   make -C trans_compete
+   make -C src/trans_three
+   make -C src/trans_compete
 
 The source-tree pipeline can then be run with:
 

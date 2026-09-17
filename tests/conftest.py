@@ -87,7 +87,7 @@ def build_sist(
         ),
     )
 
-    for directory in ("trans_three", "trans_compete"):
+    for directory in ("src/trans_three", "src/trans_compete"):
         clean_result = run_command(
             ["make", "-C", directory, "clean"],
             cwd=working_copy,

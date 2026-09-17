@@ -49,10 +49,10 @@
 *.app
 
 # SIST build outputs
-trans_three/qsidd
-trans_compete/qsidd
-trans_three/depend
-trans_compete/depend
+src/trans_three/qsidd
+src/trans_compete/qsidd
+src/trans_three/depend
+src/trans_compete/depend
 
 # Debug information files
 *.dwo
