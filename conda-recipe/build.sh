@@ -9,8 +9,8 @@ make -C src/trans_compete
 
 install -d "${PREFIX}/bin"
 install -d "${PREFIX}/libexec/sist"
-install -d "${PREFIX}/libexec/sist/trans_three"
-install -d "${PREFIX}/libexec/sist/trans_compete"
+install -d "${PREFIX}/libexec/sist/src/trans_three"
+install -d "${PREFIX}/libexec/sist/src/trans_compete"
 
 install -m 755 \
     master.pl \
@@ -22,11 +22,11 @@ install -m 755 \
 
 install -m 755 \
     src/trans_three/qsidd \
-    "${PREFIX}/libexec/sist/trans_three/qsidd"
+    "${PREFIX}/libexec/sist/src/trans_three/qsidd"
 
 install -m 755 \
     src/trans_compete/qsidd \
-    "${PREFIX}/libexec/sist/trans_compete/qsidd"
+    "${PREFIX}/libexec/sist/src/trans_compete/qsidd"
 
 cat > "${PREFIX}/bin/sist" << 'EOF'
 #!/usr/bin/env bash
