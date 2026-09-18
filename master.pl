@@ -23,8 +23,8 @@ my $usage = "\nusage: $0 -f <sequence file> -a <algorithm_type> (choose algorith
 "Script analyzes superhelically induced structural transition probabilities for each base pair.\n".
 "Algorithm types: M (melting), Z (Z-DNA), C (cruciforms), and A (competition between all three).\n".
 "Sequence file will be converted to the format required by the algorithm.\n".
-"Code in directory trans_three/ will handle M, Z, and C algorithm types.\n".
-"Code in directory trans_compete/ will handle A algorithm type.\n".
+"Code in directory src/trans_three/ will handle M, Z, and C algorithm types.\n".
+"Code in directory src/trans_compete/ will handle A algorithm type.\n".
 "For algorithm type options -a C and -a A user will need an Inverted Repeat Finder (IRF) executable compatible with user's operating system.\n".
 "IRF download page: http://tandem.bu.edu/irf/irf.download.html.\n".
 "Selected output will be printed to the screen.\n\n".
@@ -73,8 +73,8 @@ if($c) {
 
 
 my @name = split("/",$file);
-my $single_exe = "$RealBin/trans_three/qsidd";
-my $compete_exe = "$RealBin/trans_compete/qsidd";
+my $single_exe = "$RealBin/src/trans_three/qsidd";
+my $compete_exe = "$RealBin/src/trans_compete/qsidd";
 
 my $output_IR;
 if ($trans eq "M") {

@@ -19,11 +19,11 @@ Source components
    repeat information required for cruciform calculations, including start
    positions, possible extrusion lengths, and cruciform formation energies.
 
-``trans_three/``
+``src/trans_three/``
    C++ implementation for analysing strand separation, Z-DNA, and cruciform
    extrusion independently.
 
-``trans_compete/``
+``src/trans_compete/``
    C++ implementation for analysing competition between strand separation,
    Z-DNA, and cruciform extrusion.
 
@@ -75,13 +75,13 @@ Compile the C++ implementations with:
 
 .. code-block:: bash
 
-   make -C trans_three
-   make -C trans_compete
+   make -C src/trans_three
+   make -C src/trans_compete
 
 After compilation, each directory contains a ``qsidd`` executable.
 
 Running ``qsidd`` without the required arguments displays its detailed usage
-information. For example, from ``trans_three``:
+information. For example, from ``src/trans_three``:
 
 .. code-block:: bash
 
@@ -99,13 +99,13 @@ Run ``IR_finder.pl`` first:
 
    perl IR_finder.pl temperature shape sequence_file
 
-For a cruciform calculation using ``trans_three``:
+For a cruciform calculation using ``src/trans_three``:
 
 .. code-block:: bash
 
    ./qsidd -C -X "string" -f sequence_file
 
-For a competition calculation using ``trans_compete``:
+For a competition calculation using ``src/trans_compete``:
 
 .. code-block:: bash
 

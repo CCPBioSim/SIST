@@ -11,10 +11,10 @@ Build the C++ components from the repository root:
 
 .. code-block:: bash
 
-   make -C trans_three clean
-   make -C trans_three
-   make -C trans_compete clean
-   make -C trans_compete
+   make -C src/trans_three clean
+   make -C src/trans_three
+   make -C src/trans_compete clean
+   make -C src/trans_compete
 
 The Makefiles are also used by the Conda build and accept the compiler and
 linker settings supplied by the Conda toolchain.
