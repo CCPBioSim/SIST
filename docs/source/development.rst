@@ -30,7 +30,6 @@ also requires:
 
 * GNU Make
 * a C++ compiler
-* Perl
 * IRF 3.08 on ``PATH``
 
 Install the Python testing dependencies:
@@ -86,18 +85,17 @@ Build requirements
 Runtime requirements
 ~~~~~~~~~~~~~~~~~~~~
 
-* Perl
+* Python, Biopython, and Beautiful Soup
 * IRF ``>=3.08,<3.09``
 * compiler runtime libraries resolved by Conda
 
 Package-test requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Python
 * pytest
 
-Python and pytest are package-test dependencies only; they are not required for
-normal use of the installed SIST package.
+pytest is a package-test dependency only; it is not required for normal use
+of the installed SIST package.
 
 Build and test the Conda package
 --------------------------------

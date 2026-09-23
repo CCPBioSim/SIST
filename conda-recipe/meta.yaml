@@ -16,8 +16,15 @@ requirements:
     - {{ compiler('cxx') }}
     - make
 
+  host:
+    - python >=3.12
+    - pip
+    - setuptools >=77,<84
+
   run:
-    - perl
+    - python >=3.12
+    - biopython >=1.85,<2.0
+    - beautifulsoup4 >=4.12,<5.0
     - irf >=3.08,<3.09
 
 test:

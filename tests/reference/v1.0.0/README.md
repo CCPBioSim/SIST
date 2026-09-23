@@ -20,6 +20,12 @@ Repeated calculations produced identical deterministic output. The Run time valu
 
 ## Commands
 
+These were the commands used to generate the reference outputs below, run
+against the `master.pl` pipeline that shipped in SIST 1.0.0 and has since
+been replaced by the `sist` Python package. They are kept here as a record
+of provenance; the baselines themselves remain the source of truth
+regardless of which implementation produced them.
+
 ### Melting
 
     perl master.pl \

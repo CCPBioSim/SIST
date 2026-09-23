@@ -133,34 +133,6 @@ def sist_command(
     """
     Return the SIST command under test.
 
-    During conda-build testing, use the installed package. Otherwise build
-    and test the maintained source tree.
-    """
-
-    if os.environ.get("CONDA_BUILD_STATE") == "TEST":
-        executable = shutil.which("sist")
-
-        if executable is None:
-            pytest.fail(
-                "The installed sist command was not found in PATH",
-                pytrace=False,
-            )
-
-        return [executable]
-
-    return [
-        "perl",
-        str(built_sist_copy / "master.pl"),
-    ]
-
-
-@pytest.fixture(scope="session")
-def python_sist_command(
-    built_sist_copy: Path,
-) -> list[str]:
-    """
-    Return the new `sist` Python CLI command under test.
-
     During conda-build testing, use the installed console script. Otherwise
     run `python -m sist` against the maintained source tree, with its qsidd
     binaries resolved via env vars pointing at the freshly built copy.
@@ -261,41 +233,5 @@ def transition_run(
         sist_command,
         tmp_path_factory,
         name=name,
-        algorithm=algorithm,
-    )
-
-
-@pytest.fixture(scope="session")
-def python_competition_run(
-    python_sist_command: list[str],
-    tmp_path_factory: pytest.TempPathFactory,
-) -> SistRun:
-    """Run the new sist Python CLI's competition calculation once."""
-
-    return run_sist_calculation(
-        python_sist_command,
-        tmp_path_factory,
-        name="python-competition",
-        algorithm="A",
-    )
-
-
-@pytest.fixture(
-    scope="session",
-    params=SIST_TRANSITIONS,
-)
-def python_transition_run(
-    request: pytest.FixtureRequest,
-    python_sist_command: list[str],
-    tmp_path_factory: pytest.TempPathFactory,
-) -> SistRun:
-    """Run each sist Python CLI transition calculation once."""
-
-    name, algorithm = request.param
-
-    return run_sist_calculation(
-        python_sist_command,
-        tmp_path_factory,
-        name=f"python-{name}",
         algorithm=algorithm,
     )
