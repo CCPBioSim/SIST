@@ -3,11 +3,11 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
-
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
@@ -118,8 +118,17 @@ def build_sist(
 
 
 @pytest.fixture(scope="session")
-def sist_command(
+def built_sist_copy(
     tmp_path_factory: pytest.TempPathFactory,
+) -> Path:
+    """Build SIST's qsidd binaries once, shared by every command fixture."""
+
+    return build_sist(tmp_path_factory)
+
+
+@pytest.fixture(scope="session")
+def sist_command(
+    built_sist_copy: Path,
 ) -> list[str]:
     """
     Return the SIST command under test.
@@ -139,12 +148,43 @@ def sist_command(
 
         return [executable]
 
-    built_sist = build_sist(tmp_path_factory)
-
     return [
         "perl",
-        str(built_sist / "master.pl"),
+        str(built_sist_copy / "master.pl"),
     ]
+
+
+@pytest.fixture(scope="session")
+def python_sist_command(
+    built_sist_copy: Path,
+) -> list[str]:
+    """
+    Return the new `sist` Python CLI command under test.
+
+    During conda-build testing, use the installed console script. Otherwise
+    run `python -m sist` against the maintained source tree, with its qsidd
+    binaries resolved via env vars pointing at the freshly built copy.
+    """
+
+    if os.environ.get("CONDA_BUILD_STATE") == "TEST":
+        executable = shutil.which("sist")
+
+        if executable is None:
+            pytest.fail(
+                "The installed sist command was not found in PATH",
+                pytrace=False,
+            )
+
+        return [executable]
+
+    os.environ["SIST_TRANS_THREE_BIN"] = str(
+        built_sist_copy / "src" / "trans_three" / "qsidd"
+    )
+    os.environ["SIST_TRANS_COMPETE_BIN"] = str(
+        built_sist_copy / "src" / "trans_compete" / "qsidd"
+    )
+
+    return [sys.executable, "-m", "sist"]
 
 
 def run_sist_calculation(
@@ -158,12 +198,7 @@ def run_sist_calculation(
 
     runtime_directory = tmp_path_factory.mktemp(f"sist-{name}")
 
-    source_input = (
-        REPOSITORY_ROOT
-        / "tests"
-        / "data"
-        / "pbr322.toy.fa"
-    )
+    source_input = REPOSITORY_ROOT / "tests" / "data" / "pbr322.toy.fa"
     runtime_input = runtime_directory / "pbr322.toy.fa"
 
     shutil.copy2(source_input, runtime_input)
@@ -226,5 +261,41 @@ def transition_run(
         sist_command,
         tmp_path_factory,
         name=name,
+        algorithm=algorithm,
+    )
+
+
+@pytest.fixture(scope="session")
+def python_competition_run(
+    python_sist_command: list[str],
+    tmp_path_factory: pytest.TempPathFactory,
+) -> SistRun:
+    """Run the new sist Python CLI's competition calculation once."""
+
+    return run_sist_calculation(
+        python_sist_command,
+        tmp_path_factory,
+        name="python-competition",
+        algorithm="A",
+    )
+
+
+@pytest.fixture(
+    scope="session",
+    params=SIST_TRANSITIONS,
+)
+def python_transition_run(
+    request: pytest.FixtureRequest,
+    python_sist_command: list[str],
+    tmp_path_factory: pytest.TempPathFactory,
+) -> SistRun:
+    """Run each sist Python CLI transition calculation once."""
+
+    name, algorithm = request.param
+
+    return run_sist_calculation(
+        python_sist_command,
+        tmp_path_factory,
+        name=f"python-{name}",
         algorithm=algorithm,
     )
