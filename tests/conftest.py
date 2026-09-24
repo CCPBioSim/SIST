@@ -128,14 +128,14 @@ def built_sist_copy(
 
 @pytest.fixture(scope="session")
 def sist_command(
-    built_sist_copy: Path,
+    request: pytest.FixtureRequest,
 ) -> list[str]:
     """
     Return the SIST command under test.
 
     During conda-build testing, use the installed console script. Otherwise
     run `python -m sist` against the maintained source tree, with its qsidd
-    binaries resolved via env vars pointing at the freshly built copy.
+    binaries resolved via env vars pointing at a freshly built copy.
     """
 
     if os.environ.get("CONDA_BUILD_STATE") == "TEST":
@@ -148,6 +148,8 @@ def sist_command(
             )
 
         return [executable]
+
+    built_sist_copy: Path = request.getfixturevalue("built_sist_copy")
 
     os.environ["SIST_TRANS_THREE_BIN"] = str(
         built_sist_copy / "src" / "trans_three" / "qsidd"
