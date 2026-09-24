@@ -283,10 +283,7 @@ class IRFinder:
                     loop_bases.append(left_value)
                     loop_bases.append(right_value)
             else:
-                # Both arms may be exhausted here, giving None; melting_energy()
-                # already treats an unrecognised/missing base as GC, so the
-                # None is left to flow through unchanged.
-                loop_bases.append(index_or_none(right_arm, index))  # type: ignore[arg-type]
+                loop_bases.append(index_or_none(right_arm, index))
                 shorten_arm += 1
 
             loop_start -= 1
