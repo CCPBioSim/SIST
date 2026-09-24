@@ -51,6 +51,20 @@ The available algorithm types are:
 Running ``sist`` without the required arguments displays the available
 command-line options.
 
+Deprecated ``master.pl`` alias
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For scripted workflows that still invoke the old Perl script name directly,
+``master.pl`` is also installed as a console-script alias for ``sist``,
+accepting the exact same arguments:
+
+.. code-block:: bash
+
+   master.pl -a M -f sequence.fa
+
+It prints a deprecation warning to stderr and will be removed in the next
+release; switch scripts over to ``sist`` in the meantime.
+
 IRF
 ---
 
@@ -91,8 +105,19 @@ Cruciform and competition component workflow
 
 When running the components directly, cruciform and competition calculations
 require the inverted-repeat energy string that ``sist`` normally computes
-internally via :mod:`sist.ir_finder` before invoking ``qsidd -X``. To produce
-it directly from Python:
+internally via :mod:`sist.ir_finder` before invoking ``qsidd -X``.
+
+For scripted workflows that still invoke the old Perl script name directly,
+this is also available as a deprecated ``IR_finder.pl`` console-script alias,
+accepting the same positional arguments as the original script and printing
+the same string to stdout:
+
+.. code-block:: bash
+
+   IR_finder.pl 310 linear sequence_file
+
+It prints a deprecation warning to stderr and will be removed in the next
+release. To produce the string directly from Python instead:
 
 .. code-block:: bash
 

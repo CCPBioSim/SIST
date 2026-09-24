@@ -283,7 +283,7 @@ class IRFinder:
                     loop_bases.append(left_value)
                     loop_bases.append(right_value)
             else:
-                loop_bases.append(index_or_none(right_arm, index))
+                loop_bases.append(index_or_none(right_arm, index))  # type: ignore[arg-type]
                 shorten_arm += 1
 
             loop_start -= 1

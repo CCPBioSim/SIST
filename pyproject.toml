@@ -33,6 +33,10 @@ Repository = "https://github.com/CCPBioSim/SIST"
 
 [project.scripts]
 sist = "sist.cli:main"
+# Deprecated aliases for scripted workflows that still invoke the old Perl
+# script names directly. 
+"master.pl" = "sist.cli:main"
+"IR_finder.pl" = "sist.ir_finder_cli:main"
 
 [project.optional-dependencies]
 testing = [

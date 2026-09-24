@@ -5,16 +5,24 @@ The entry point is intentionally small and only responsible for:
   2) Validating those arguments.
   3) Constructing a SistRunner and running it.
   4) Handling fatal errors with a non-zero exit code.
+
+It is also installed under the deprecated console-script alias ``master.pl``
+(see ``[project.scripts]`` in ``pyproject.toml``) for scripted workflows that
+still invoke it by that name. That alias will be removed in the next release.
 """
 
 from __future__ import annotations
 
 import logging
+import sys
+from pathlib import Path
 
 from sist.argspec import SistArgumentParser
 from sist.runner import SistRunner
 
 logger = logging.getLogger(__name__)
+
+DEPRECATED_ALIAS = "master.pl"
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -27,6 +35,13 @@ def main(argv: list[str] | None = None) -> None:
         SystemExit: Exits with status code 1 on any unhandled exception.
     """
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
+
+    if Path(sys.argv[0]).name == DEPRECATED_ALIAS:
+        print(
+            f"WARNING: '{DEPRECATED_ALIAS}' is a deprecated alias for 'sist' "
+            "and will be removed in the next release. Use 'sist' instead.",
+            file=sys.stderr,
+        )
 
     argument_parser = SistArgumentParser()
     parser = argument_parser.build_parser()

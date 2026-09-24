@@ -86,3 +86,13 @@ For cruciform and competition calculations, IRF must be available on ``PATH``.
 The source build uses the same calculation modes and command-line parameters as
 the installed ``sist`` command. The Source Usage page describes the individual
 source components and direct component workflow in more detail.
+
+Deprecated ``master.pl``/``IR_finder.pl`` aliases
+--------------------------------------------------
+
+For scripted workflows that still invoke the old Perl script names directly,
+``master.pl`` and ``IR_finder.pl`` are also installed as console-script
+aliases, backed by the same Python implementation as ``sist``. Both print a
+deprecation warning and will be removed in the next release; switch scripts
+over to ``sist`` (and the Python API, for direct use of the IR-finder
+component) in the meantime.
