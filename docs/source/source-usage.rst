@@ -1,8 +1,8 @@
 Source Usage
 ============
 
-SIST consists of a Perl pipeline, an IRF integration script, and two C++
-implementations of the transition calculations.
+SIST consists of a Python package, ``sist``, and two C++ implementations of
+the transition calculations.
 
 Normal installed use should go through the ``sist`` command. The interfaces
 described on this page are useful when building, inspecting, or running the
@@ -11,13 +11,11 @@ source tree directly.
 Source components
 -----------------
 
-``master.pl``
-   Pipeline used to run the supported SIST calculations.
-
-``IR_finder.pl``
-   Processes Inverted Repeats Finder (IRF) output and produces the inverted
-   repeat information required for cruciform calculations, including start
-   positions, possible extrusion lengths, and cruciform formation energies.
+``src/sist/``
+   The ``sist`` Python package: the command-line interface, orchestration
+   that dispatches to the ``qsidd`` binaries, and the Inverted Repeats Finder
+   (IRF) integration and energy calculations required for cruciform
+   calculations.
 
 ``src/trans_three/``
    C++ implementation for analysing strand separation, Z-DNA, and cruciform
@@ -27,20 +25,21 @@ Source components
    C++ implementation for analysing competition between strand separation,
    Z-DNA, and cruciform extrusion.
 
-Running ``master.pl``
----------------------
+Running ``sist`` from source
+-----------------------------
 
-After building both C++ components, run the source-tree pipeline with Perl:
+After building both C++ components and installing the ``sist`` package (see
+:doc:`installation`), run the source-tree pipeline with:
 
 .. code-block:: bash
 
-   perl master.pl -f <sequence_file> -a <algorithm_type> [options]
+   sist -f <sequence_file> -a <algorithm_type> [options]
 
 For example:
 
 .. code-block:: bash
 
-   perl master.pl -a M -f sequence.fa
+   sist -a M -f sequence.fa
 
 The available algorithm types are:
 
@@ -49,16 +48,30 @@ The available algorithm types are:
 * ``-a C``: cruciform transition only
 * ``-a A``: competition between melting, Z-DNA, and cruciform transitions
 
-Running ``perl master.pl`` without the required arguments displays the
-available command-line options.
+Running ``sist`` without the required arguments displays the available
+command-line options.
+
+Deprecated ``master.pl`` alias
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For scripted workflows that still invoke the old Perl script name directly,
+``master.pl`` is also installed as a console-script alias for ``sist``,
+accepting the exact same arguments:
+
+.. code-block:: bash
+
+   master.pl -a M -f sequence.fa
+
+It prints a deprecation warning to stderr and will be removed in the next
+release; switch scripts over to ``sist`` in the meantime.
 
 IRF
 ---
 
 Cruciform and competition calculations require Inverted Repeats Finder.
 
-``IR_finder.pl`` invokes ``irf`` from ``PATH``. For source builds, install a
-compatible IRF 3.08 executable and ensure that:
+``sist``'s IR-finder component invokes ``irf`` from ``PATH``. For source
+builds, install a compatible IRF 3.08 executable and ensure that:
 
 .. code-block:: bash
 
@@ -91,13 +104,28 @@ Cruciform and competition component workflow
 --------------------------------------------
 
 When running the components directly, cruciform and competition calculations
-require the output produced by ``IR_finder.pl``.
+require the inverted-repeat energy string that ``sist`` normally computes
+internally via :mod:`sist.ir_finder` before invoking ``qsidd -X``.
 
-Run ``IR_finder.pl`` first:
+For scripted workflows that still invoke the old Perl script name directly,
+this is also available as a deprecated ``IR_finder.pl`` console-script alias,
+accepting the same positional arguments as the original script and printing
+the same string to stdout:
 
 .. code-block:: bash
 
-   perl IR_finder.pl temperature shape sequence_file
+   IR_finder.pl 310 linear sequence_file
+
+It prints a deprecation warning to stderr and will be removed in the next
+release. To produce the string directly from Python instead:
+
+.. code-block:: bash
+
+   python -c "
+   from sist.ir_finder import IRFinder
+   finder = IRFinder(temperature=310.0, shape='linear')
+   print(finder.compute_cruciform_energy_string('sequence_file'))
+   "
 
 For a cruciform calculation using ``src/trans_three``:
 
@@ -111,17 +139,17 @@ For a competition calculation using ``src/trans_compete``:
 
    ./qsidd -X "string" -f sequence_file
 
-Here, ``string`` is the output produced by ``IR_finder.pl``.
+Here, ``string`` is the output produced above.
 
-``master.pl`` coordinates this workflow automatically and is normally the
+``sist`` coordinates this workflow automatically and is normally the
 preferred source-tree entry point.
 
 Working directory
 -----------------
 
-For cruciform and competition calculations, ``IR_finder.pl`` uses the basename
-of the input sequence. The sequence file should therefore be present in the
-current working directory when these calculations are run.
+For cruciform and competition calculations, :mod:`sist.ir_finder` uses the
+basename of the input sequence. The sequence file should therefore be present
+in the current working directory when these calculations are run.
 
 Example calculation
 -------------------
@@ -129,19 +157,7 @@ Example calculation
 The repository contains an example competition calculation based on
 ``pbr322.toy.fa``.
 
-The source-tree command is:
-
-.. code-block:: bash
-
-   perl master.pl \
-       -f pbr322.toy.fa \
-       -a A \
-       -o pbr322.toy.compete.txt \
-       -b \
-       -p \
-       -r
-
-The equivalent installed command is:
+The command is:
 
 .. code-block:: bash
 

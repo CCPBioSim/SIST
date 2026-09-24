@@ -4,11 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "SIST"
-version = "0.0.1"
+dynamic = ["version"]
 description = "Stress-Induced Structural Transitions in superhelical DNA."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "biopython>=1.85,<2.0",
+    "beautifulsoup4>=4.12,<5.0",
+]
 
 authors = [
     { name = "Craig Benham", email = "cjbenham@ucdavis.edu" },
@@ -28,15 +31,25 @@ maintainers = [
 [project.urls]
 Repository = "https://github.com/CCPBioSim/SIST"
 
+[project.scripts]
+sist = "sist.cli:main"
+# Deprecated aliases for scripted workflows that still invoke the old Perl
+# script names directly. 
+"master.pl" = "sist.cli:main"
+"IR_finder.pl" = "sist.ir_finder_cli:main"
+
 [project.optional-dependencies]
 testing = [
     "pytest>=9.0,<10.0",
+    "mypy>=1.14,<2.0",
 ]
 
-[tool.setuptools]
-# SIST is currently a Perl/C++ application. This metadata manages the Python
-# test harness and its development dependencies; it does not package SIST.
-packages = []
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["sist*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "sist.__version__" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -45,3 +58,26 @@ markers = [
     "regression: end-to-end regression tests against reference outputs",
     "slow: long-running tests excluded from the default test suite",
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.12"
+packages = ["sist"]
+mypy_path = "src"
+disallow_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[[tool.mypy.overrides]]
+module = ["Bio.*", "bs4.*"]
+ignore_missing_imports = true
