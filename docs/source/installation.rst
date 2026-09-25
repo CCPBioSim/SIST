@@ -7,7 +7,6 @@ Supported platforms
 SIST's Conda package is built and tested on:
 
 * ``linux-64``
-* ``linux-aarch64``
 * ``osx-64``
 * ``osx-arm64``
 
