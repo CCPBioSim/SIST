@@ -45,7 +45,6 @@ class IRFinder:
     IRF_MAX_LENGTH = 10000
     IRF_MAX_LOOP = 100
     IRF_MIN_LOOP = 3
-    IRF_TIMEOUT_SECONDS = 120
 
     CRUCIFORM_SALT = 0.01
 
@@ -330,7 +329,6 @@ class IRFinder:
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,
-            timeout=self.IRF_TIMEOUT_SECONDS,
         )
 
         report_prefix = (
