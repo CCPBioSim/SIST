@@ -325,6 +325,7 @@ class IRFinder:
                 str(self.IRF_MAX_LENGTH),
                 str(self.IRF_MAX_LOOP),
             ],
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,

@@ -17,9 +17,13 @@ concurrency:
 
 jobs:
   regression:
-    name: SIST Regression
-    runs-on: ubuntu-24.04
+    name: SIST Regression (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-26.04, macos-26-intel, macos-26]
 
     steps:
       - name: Checkout

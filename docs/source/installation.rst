@@ -1,6 +1,15 @@
 Installation
 ============
 
+Supported platforms
+--------------------
+
+SIST's Conda package is built and tested on:
+
+* ``linux-64``
+* ``osx-64``
+* ``osx-arm64``
+
 Conda
 -----
 
