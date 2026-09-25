@@ -27,8 +27,8 @@ dependencies required by SIST, including:
 * Inverted Repeats Finder (IRF)
 * the required C++ runtime libraries
 
-SIST 1.0.0 is validated with IRF 3.08, and the Conda package constrains the
-runtime dependency to ``>=3.08,<3.09``.
+SIST 1.0.0 is validated with IRF 3.09, and the Conda package constrains the
+runtime dependency to ``>=3.09,<3.10``.
 
 pytest is used for testing and is not required in a normal SIST runtime
 environment.
@@ -62,7 +62,7 @@ A source build requires:
 * a C++ compiler
 * GNU Make
 * Python 3.12 or later
-* IRF 3.08 available as ``irf`` on ``PATH``
+* IRF 3.09 available as ``irf`` on ``PATH``
 
 Build both C++ components from the repository root:
 
