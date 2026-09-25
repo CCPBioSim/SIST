@@ -12,9 +12,13 @@ concurrency:
 
 jobs:
   regression:
-    name: Regression
-    runs-on: ubuntu-24.04
+    name: Regression (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-14]
 
     steps:
       - name: Checkout

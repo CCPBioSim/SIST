@@ -206,9 +206,13 @@ jobs:
             --data-urlencode "content=${CONTENT}"
 
   conda:
-    name: publish conda to anaconda.org
+    name: publish conda to anaconda.org (${{ matrix.os }})
     needs: [tag, release]
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-14]
 
     steps:
       - name: Checkout
