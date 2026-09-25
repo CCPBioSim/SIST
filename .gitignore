@@ -75,6 +75,10 @@ __pycache__/
 .ruff_cache/
 *.egg-info/
 
+# Coverage
+.coverage
+coverage.xml
+
 # Regression test artefacts
 .testdata/
 test-results/
