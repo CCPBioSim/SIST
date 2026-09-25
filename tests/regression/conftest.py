@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 SIST_TRANSITIONS = (
     pytest.param(("melting", "M"), id="melting"),
@@ -172,7 +172,7 @@ def run_sist_calculation(
 
     runtime_directory = tmp_path_factory.mktemp(f"sist-{name}")
 
-    source_input = REPOSITORY_ROOT / "tests" / "data" / "pbr322.toy.fa"
+    source_input = Path(__file__).resolve().parent / "data" / "pbr322.toy.fa"
     runtime_input = runtime_directory / "pbr322.toy.fa"
 
     shutil.copy2(source_input, runtime_input)
