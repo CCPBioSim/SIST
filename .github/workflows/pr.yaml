@@ -24,10 +24,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
 
-      - name: Setup Conda
+      - name: Setup Mamba
         uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4
         with:
           miniforge-variant: Miniforge3
+          mamba-version: "*"
           auto-activate: true
           activate-environment: base
           conda-remove-defaults: true
@@ -37,7 +38,7 @@ jobs:
       - name: Install conda-build
         shell: bash -l {0}
         run: |
-          conda install -y \
+          mamba install -y \
             --override-channels \
             -c conda-forge \
             conda-build
