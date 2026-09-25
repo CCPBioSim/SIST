@@ -71,7 +71,7 @@ IRF
 Cruciform and competition calculations require Inverted Repeats Finder.
 
 ``sist``'s IR-finder component invokes ``irf`` from ``PATH``. For source
-builds, install a compatible IRF 3.08 executable and ensure that:
+builds, install a compatible IRF 3.09 executable and ensure that:
 
 .. code-block:: bash
 

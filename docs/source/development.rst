@@ -30,7 +30,7 @@ also requires:
 
 * GNU Make
 * a C++ compiler
-* IRF 3.08 on ``PATH``
+* IRF 3.09 on ``PATH``
 
 Install the Python testing dependencies:
 
@@ -86,7 +86,7 @@ Runtime requirements
 ~~~~~~~~~~~~~~~~~~~~
 
 * Python, Biopython, and Beautiful Soup
-* IRF ``>=3.08,<3.09``
+* IRF ``>=3.09,<3.10``
 * compiler runtime libraries resolved by Conda
 
 Package-test requirements
