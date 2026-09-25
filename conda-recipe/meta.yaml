@@ -25,7 +25,7 @@ requirements:
     - python >=3.12
     - biopython >=1.85,<2.0
     - beautifulsoup4 >=4.12,<5.0
-    - irf >=3.08,<3.09
+    - irf >=3.09,<3.10
 
 test:
   requires:
