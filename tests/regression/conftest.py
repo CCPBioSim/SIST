@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 SIST_TRANSITIONS = (
     pytest.param(("melting", "M"), id="melting"),
@@ -136,6 +136,10 @@ def sist_command(
     During conda-build testing, use the installed console script. Otherwise
     run `python -m sist` against the maintained source tree, with its qsidd
     binaries resolved via env vars pointing at a freshly built copy.
+
+    `built_sist_copy` is looked up lazily (rather than taken as a normal
+    fixture parameter) so conda-build testing never triggers it: that build
+    only has `tests/` and `pyproject.toml` available, not the C++ sources.
     """
 
     if os.environ.get("CONDA_BUILD_STATE") == "TEST":
@@ -172,7 +176,7 @@ def run_sist_calculation(
 
     runtime_directory = tmp_path_factory.mktemp(f"sist-{name}")
 
-    source_input = REPOSITORY_ROOT / "tests" / "data" / "pbr322.toy.fa"
+    source_input = Path(__file__).resolve().parent / "data" / "pbr322.toy.fa"
     runtime_input = runtime_directory / "pbr322.toy.fa"
 
     shutil.copy2(source_input, runtime_input)
