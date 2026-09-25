@@ -136,10 +136,6 @@ def sist_command(
     During conda-build testing, use the installed console script. Otherwise
     run `python -m sist` against the maintained source tree, with its qsidd
     binaries resolved via env vars pointing at a freshly built copy.
-
-    `built_sist_copy` is looked up lazily (rather than taken as a normal
-    fixture parameter) so conda-build testing never triggers it: that build
-    only has `tests/` and `pyproject.toml` available, not the C++ sources.
     """
 
     if os.environ.get("CONDA_BUILD_STATE") == "TEST":
