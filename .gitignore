@@ -57,6 +57,11 @@ src/trans_compete/depend
 # Debug information files
 *.dwo
 
+# gcov/lcov coverage instrumentation and reports
+*.gcno
+*.gcda
+coverage.info
+
 # Build directories
 build/
 dist/

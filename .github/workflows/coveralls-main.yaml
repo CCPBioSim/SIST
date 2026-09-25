@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  coveralls:
-    name: Build main coverage baseline
+  python-coverage:
+    name: Build main coverage baseline (Python)
     runs-on: ubuntu-24.04
     timeout-minutes: 30
 
@@ -51,4 +51,95 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           file: coverage.xml
+          flag-name: python
+          parallel: true
           fail-on-error: false
+
+  cpp-coverage:
+    name: Build main coverage baseline (C++)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      checks: write
+      statuses: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: "3.14"
+
+      - name: Setup Conda (for irf only)
+        uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4
+        with:
+          miniforge-variant: Miniforge3
+          auto-activate: true
+          activate-environment: base
+          conda-remove-defaults: true
+          channels: conda-forge,bioconda
+          channel-priority: strict
+
+      - name: Install irf
+        shell: bash -l {0}
+        run: |
+          conda install -y \
+            --override-channels \
+            -c bioconda \
+            -c conda-forge \
+            "irf>=3.09,<3.10"
+
+      - name: Install sist and coverage tooling
+        shell: bash -l {0}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[testing]
+          python -m pip install gcovr
+
+      - name: Build qsidd with coverage instrumentation
+        run: |
+          make -C src/trans_three clean
+          make -C src/trans_three coverage
+          make -C src/trans_compete clean
+          make -C src/trans_compete coverage
+
+      - name: Run regression tests against instrumented binaries
+        shell: bash -l {0}
+        env:
+          CONDA_BUILD_STATE: TEST
+          SIST_TRANS_THREE_BIN: ${{ github.workspace }}/src/trans_three/qsidd
+          SIST_TRANS_COMPETE_BIN: ${{ github.workspace }}/src/trans_compete/qsidd
+        run: python -m pytest tests/regression -vv
+
+      - name: Generate lcov report
+        run: |
+          gcovr --root . \
+            --filter 'src/trans_three/.*' \
+            --filter 'src/trans_compete/.*' \
+            --gcov-ignore-parse-errors=suspicious_hits.warn \
+            --lcov coverage.info
+
+      - name: Upload coverage to Coveralls
+        uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: coverage.info
+          flag-name: cpp
+          parallel: true
+          fail-on-error: false
+
+  finish:
+    name: Close Coveralls build
+    needs: [python-coverage, cpp-coverage]
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Close parallel build
+        uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          parallel-finished: true
