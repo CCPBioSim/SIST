@@ -12,13 +12,14 @@ concurrency:
 
 jobs:
   unit:
-    name: Unit (py${{ matrix.python-version }})
-    runs-on: ubuntu-26.04
+    name: Unit (${{ matrix.os }}, py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
 
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-26.04, macos-26-intel, macos-26]
         python-version: ["3.12", "3.13", "3.14"]
 
     steps:
@@ -39,13 +40,14 @@ jobs:
         run: python -m pytest tests/unit
 
   regression:
-    name: Regression (${{ matrix.os }})
+    name: Regression (${{ matrix.os }}, py${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-26.04, macos-26-intel, macos-26]
+        python-version: ["3.12", "3.13", "3.14"]
 
     steps:
       - name: Checkout
@@ -77,6 +79,7 @@ jobs:
             --override-channels \
             -c conda-forge \
             -c bioconda \
+            --python ${{ matrix.python-version }} \
             --no-anaconda-upload
 
   docs:

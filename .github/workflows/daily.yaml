@@ -11,13 +11,14 @@ concurrency:
 
 jobs:
   unit:
-    name: Unit (py${{ matrix.python-version }})
-    runs-on: ubuntu-26.04
+    name: Unit (${{ matrix.os }}, py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
 
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-26.04, macos-26-intel, macos-26]
         python-version: ["3.12", "3.13", "3.14"]
 
     steps:
