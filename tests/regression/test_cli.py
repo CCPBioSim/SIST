@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import pytest
-
 from conftest import SistRun
-
 
 pytestmark = pytest.mark.regression
 
@@ -26,13 +24,9 @@ def assert_output_is_created(sist_run: SistRun) -> None:
 
     output_path = sist_run.output_path
 
-    assert output_path.is_file(), (
-        f"Expected output file was not created: {output_path}"
-    )
+    assert output_path.is_file(), f"Expected output file was not created: {output_path}"
 
-    assert output_path.stat().st_size > 0, (
-        f"Output file is empty: {output_path}"
-    )
+    assert output_path.stat().st_size > 0, f"Output file is empty: {output_path}"
 
 
 def test_competition_command_succeeds(
@@ -71,9 +65,7 @@ def test_competition_output_contains_expected_sections(
     )
 
     for section in expected_sections:
-        assert section in output, (
-            f"Expected output section was not found: {section!r}"
-        )
+        assert section in output, f"Expected output section was not found: {section!r}"
 
 
 def test_transition_command_succeeds(
@@ -109,6 +101,5 @@ def test_transition_output_contains_expected_sections(
 
     for section in expected_sections:
         assert section in output, (
-            f"{transition_run.name}: expected output section "
-            f"was not found: {section!r}"
+            f"{transition_run.name}: expected output section was not found: {section!r}"
         )

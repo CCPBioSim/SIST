@@ -6,8 +6,8 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'SIST'
-copyright = '2026, CCPBioSim'
+project = "SIST"
+copyright = "2026, CCPBioSim"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -29,18 +29,17 @@ napoleon_google_docstring = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 
-templates_path = ['_templates']
+templates_path = ["_templates"]
 exclude_patterns = []
-
 
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'furo'
+html_theme = "furo"
 html_theme_options = {
     "dark_logo": "logos/SIST-logo-white-text.svg",
     "light_logo": "logos/SIST-logo-black-text.svg",
 }
 
-html_static_path = ['_static']
+html_static_path = ["_static"]

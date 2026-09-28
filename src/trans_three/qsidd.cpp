@@ -1,6 +1,6 @@
 // qsidd.cpp: main() function
 // program to implement algorithm developed by Craig Benham
-// 
+//
 // author: Chengpeng Bi
 // modifiers: Dina Zhabinskaya, Sally Madden, Ian Korf
 // compiler: g++
@@ -12,12 +12,12 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "SIDD_4R.h"
-#include <time.h>
 #include <iostream>
-#include <unistd.h>
 #include <sstream>
-#include <string>
 #include <stdlib.h>
+#include <string>
+#include <time.h>
+#include <unistd.h>
 
 static char help[] = "\
 QSIDD Help\n\
@@ -51,7 +51,6 @@ Position        P(x)    G(x)\n\
 5       7.51455e-07     11.4479\n\
 ";
 
-
 static char usage[] = "\
 usage: qsidd [options] <sequence> \n\
 options:\n\
@@ -73,144 +72,181 @@ options:\n\
   -r        print ensemble average results\n\
  ";
 
-int main(int argc, char* argv[])
-{
-	SIDD_4R sidd;
-	time_t time_1, time_2;
-	int c;
-	extern int optind;
-	
-	// default parameters
-	Energetics et = Copolymeric;
-	Molecule mt   = Linear;
-	char *energy  = NULL;
-	char *dnafile = NULL;
-    
-	stringstream dnasequence;
-    stringstream cruciform_string;
+int main(int argc, char *argv[]) {
+  SIDD_4R sidd;
+  time_t time_1, time_2;
+  int c;
+  extern int optind;
 
-	int verbose = 0;
-    int showpar = 0;
-    int showres = 0;
-    int showbase = 0;
-	double salt_conc = 0.01;
-	double temperature = 310.00;
-	double stress_level=0.06; 
-	double threshold = 12;
-	int usefile = 0;
-	// option processing
-	while ((c = getopt(argc, argv, "hcfnbvpraietTZCXsm:")) != -1) {
-			switch (c) {
-			case 'c': mt = Circular;    break;
-			case 'n': et = Near_Neighbor;   break;
-            case 'b': showbase = 1; break;
-            case 'f': usefile = 1; break;
-			case 'Z': et = Z_DNA;   break;
-            case 'C': et = Cruciform;   break;
-            case 'X': cruciform_string << argv[optind++];   break;
-			case 'e': energy = argv[optind++];  break;
-			case 'v': verbose = 1;  break;
-            case 'p': showpar = 1;  break;
-            case 'r': showres = 1;  break;
-			case 'T': temperature = atof(argv[optind++]);   break;
-			case 's': stress_level = atof(argv[optind++]);  break;
-			case 'i': salt_conc=atof(argv[optind++]);   break;
-			case 't': threshold=atof(argv[optind++]);   break;
-			case 'h': cout<<help<<endl;   exit(1);
-            default:  exit(1);
-		}
-	}
-	
-	//start time
-	time_1 = time(NULL); 
-	sidd.set_salt_conc(salt_conc);
-	sidd.set_stress_level(stress_level);
-	sidd.set_temperature(temperature);
-	sidd.set_MoleculeType(mt);                    
-	sidd.set_EnergyType(et);
-	sidd.set_threshold(threshold);
-    sidd.set_showres(showres);
-    sidd.set_cruciform_string(cruciform_string.str().c_str());
-    sidd.set_showbase(showbase);
-    
-	if (argc - optind != 1) {
-		cerr << usage << endl;
-		exit(1);
-	}
+  // default parameters
+  Energetics et = Copolymeric;
+  Molecule mt = Linear;
+  char *energy = NULL;
+  char *dnafile = NULL;
 
-	if(usefile){
-        dnafile = argv[argc -1 ];
-        if (showpar) {
-            cout << "DNA sequence file: " << dnafile << endl;
-        }
-        ifstream f(dnafile);
-        if (f){
-            dnasequence << f.rdbuf();
-            f.close();
-        }
+  stringstream dnasequence;
+  stringstream cruciform_string;
+
+  int verbose = 0;
+  int showpar = 0;
+  int showres = 0;
+  int showbase = 0;
+  double salt_conc = 0.01;
+  double temperature = 310.00;
+  double stress_level = 0.06;
+  double threshold = 12;
+  int usefile = 0;
+  // option processing
+  while ((c = getopt(argc, argv, "hcfnbvpraietTZCXsm:")) != -1) {
+    switch (c) {
+    case 'c':
+      mt = Circular;
+      break;
+    case 'n':
+      et = Near_Neighbor;
+      break;
+    case 'b':
+      showbase = 1;
+      break;
+    case 'f':
+      usefile = 1;
+      break;
+    case 'Z':
+      et = Z_DNA;
+      break;
+    case 'C':
+      et = Cruciform;
+      break;
+    case 'X':
+      cruciform_string << argv[optind++];
+      break;
+    case 'e':
+      energy = argv[optind++];
+      break;
+    case 'v':
+      verbose = 1;
+      break;
+    case 'p':
+      showpar = 1;
+      break;
+    case 'r':
+      showres = 1;
+      break;
+    case 'T':
+      temperature = atof(argv[optind++]);
+      break;
+    case 's':
+      stress_level = atof(argv[optind++]);
+      break;
+    case 'i':
+      salt_conc = atof(argv[optind++]);
+      break;
+    case 't':
+      threshold = atof(argv[optind++]);
+      break;
+    case 'h':
+      cout << help << endl;
+      exit(1);
+    default:
+      exit(1);
     }
-    else {
-        dnasequence << argv[argc -1];
+  }
+
+  // start time
+  time_1 = time(NULL);
+  sidd.set_salt_conc(salt_conc);
+  sidd.set_stress_level(stress_level);
+  sidd.set_temperature(temperature);
+  sidd.set_MoleculeType(mt);
+  sidd.set_EnergyType(et);
+  sidd.set_threshold(threshold);
+  sidd.set_showres(showres);
+  sidd.set_cruciform_string(cruciform_string.str().c_str());
+  sidd.set_showbase(showbase);
+
+  if (argc - optind != 1) {
+    cerr << usage << endl;
+    exit(1);
+  }
+
+  if (usefile) {
+    dnafile = argv[argc - 1];
+    if (showpar) {
+      cout << "DNA sequence file: " << dnafile << endl;
     }
-    int length = dnasequence.str().size();
+    ifstream f(dnafile);
+    if (f) {
+      dnasequence << f.rdbuf();
+      f.close();
+    }
+  } else {
+    dnasequence << argv[argc - 1];
+  }
+  int length = dnasequence.str().size();
 
-	if(verbose)  {
-        if (energy) {
-            cout << "Energy assignment file: " << energy << endl;
-        }
-        sidd.set_Flag_PEA(energy);
-	}
-    
-    if (!sidd.initializer(dnasequence.str().c_str(),length)) {
-		cerr << "sidd.initializer failed" << endl;
-        exit(1);
-	}
-    if (sidd.get_Flag_PEA()) sidd.assign_pea(energy);
+  if (verbose) {
+    if (energy) {
+      cout << "Energy assignment file: " << energy << endl;
+    }
+    sidd.set_Flag_PEA(energy);
+  }
 
-    if (threshold < 9)
-        cout << "WARNING: threshold is too small, results may be inaccurate"<< endl;
-    if (threshold > 15)
-        cout << "WARNING: threshold is too high, execution time may be very long"<< endl;
-    if (stress_level > 0.15 || stress_level < -0.15)
-        cout << "WARNING: superhelical density is outside of physiological range"<< endl;
-    if (temperature < 220 || temperature > 320)
-        cout << "WARNING: temperature is outside of physiological range"<< endl;
-    if (salt_conc < 0.0001)
-        cout << "WARNING: salt concentration is outside of physiological range"<< endl;
-    if (length < 1500)
-        cout << "WARNING: sequence length is too short"<< endl;
-    if (length > 10000)
-        cout << "WARNING: sequence length is too long"<< endl;
+  if (!sidd.initializer(dnasequence.str().c_str(), length)) {
+    cerr << "sidd.initializer failed" << endl;
+    exit(1);
+  }
+  if (sidd.get_Flag_PEA())
+    sidd.assign_pea(energy);
 
-//	sidd.show_seq(); // show sequence
-	sidd.gen_OpenBaseEnergy(); // SIDD_1R (calculate opening energies and sort w/ increasing energy for each window size 1 to 250)
-	sidd.write_close(); //don't write profile yet, just find minE
-	sidd.Search_Low1RE(); // this step is here to update minE (from the zero-run state) if it's found in one-run states
-	sidd.write_open(); // start to store info
-	if(verbose)
-        cout << "writing profile...\n";
-    if (showpar)
-        sidd.show_parameter();
-    //cout << "AAAA1"<< endl;
-	sidd.reset_profile();  // initialize profile
-    //cout << "AAAA2"<< endl;
-	sidd.Search_Low1RE(); // searching for one-run states and now storing info
-    //cout << "AAAA3"<< endl;
-	sidd.Search_Low2RE(); // searching states for two-run
-    //cout << "AAAA4"<< endl;
-	sidd.Search_Low3RE(); // searching states for three-run
-    //cout << "AAAA5"<< endl;
-	sidd.Search_Low4RE(); // searching states for four-run
-    //cout << "AAAA6"<< endl;
-	sidd.fill_profile(); // computing profile
-    //cout << "AAAA7"<< endl;
-	sidd.calc_profile(); // calculate profile
-	time_2 = time(NULL);  //end time
-    sidd.sum_open();
-    time_2 = time(NULL);  //end time
-    if (showpar)
-        cout << "Run time = " << (time_2-time_1) << " sec" << endl;
-    sidd.show_profile(); // send output to screen or a disk file	
-	return 0; // end of program
+  if (threshold < 9)
+    cout << "WARNING: threshold is too small, results may be inaccurate"
+         << endl;
+  if (threshold > 15)
+    cout << "WARNING: threshold is too high, execution time may be very long"
+         << endl;
+  if (stress_level > 0.15 || stress_level < -0.15)
+    cout << "WARNING: superhelical density is outside of physiological range"
+         << endl;
+  if (temperature < 220 || temperature > 320)
+    cout << "WARNING: temperature is outside of physiological range" << endl;
+  if (salt_conc < 0.0001)
+    cout << "WARNING: salt concentration is outside of physiological range"
+         << endl;
+  if (length < 1500)
+    cout << "WARNING: sequence length is too short" << endl;
+  if (length > 10000)
+    cout << "WARNING: sequence length is too long" << endl;
 
+  //	sidd.show_seq(); // show sequence
+  sidd.gen_OpenBaseEnergy(); // SIDD_1R (calculate opening energies and sort w/
+                             // increasing energy for each window size 1 to 250)
+  sidd.write_close();        // don't write profile yet, just find minE
+  sidd.Search_Low1RE(); // this step is here to update minE (from the zero-run
+                        // state) if it's found in one-run states
+  sidd.write_open();    // start to store info
+  if (verbose)
+    cout << "writing profile...\n";
+  if (showpar)
+    sidd.show_parameter();
+  // cout << "AAAA1"<< endl;
+  sidd.reset_profile(); // initialize profile
+                        // cout << "AAAA2"<< endl;
+  sidd.Search_Low1RE(); // searching for one-run states and now storing info
+                        // cout << "AAAA3"<< endl;
+  sidd.Search_Low2RE(); // searching states for two-run
+                        // cout << "AAAA4"<< endl;
+  sidd.Search_Low3RE(); // searching states for three-run
+                        // cout << "AAAA5"<< endl;
+  sidd.Search_Low4RE(); // searching states for four-run
+                        // cout << "AAAA6"<< endl;
+  sidd.fill_profile();  // computing profile
+                        // cout << "AAAA7"<< endl;
+  sidd.calc_profile();  // calculate profile
+  time_2 = time(NULL);  // end time
+  sidd.sum_open();
+  time_2 = time(NULL); // end time
+  if (showpar)
+    cout << "Run time = " << (time_2 - time_1) << " sec" << endl;
+  sidd.show_profile(); // send output to screen or a disk file
+  return 0;            // end of program
 }

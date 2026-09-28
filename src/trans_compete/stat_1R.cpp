@@ -21,38 +21,28 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-stat_1R::stat_1R(int s, double e, double RT) //constructor
+stat_1R::stat_1R(int s, double e, double RT) // constructor
 {
-	start_pos1 = s;  //starting position
-	energy = e;
+  start_pos1 = s; // starting position
+  energy = e;
 }
 
-stat_1R::~stat_1R()  //destructor ???
-{
+stat_1R::~stat_1R() // destructor ???
+{}
 
+bool stat_1R::operator<(const stat_1R &x1) const {
+
+  return (energy < x1.get_energy());
 }
 
+bool stat_1R::operator==(const stat_1R &x1) const {
 
-
-bool stat_1R::operator<(const stat_1R& x1)const
-{
-
-	return (energy < x1.get_energy());
-
+  return (energy == x1.get_energy());
 }
 
-bool stat_1R::operator==(const stat_1R& x1)const
-{
+bool stat_1R::operator>(const stat_1R &x1) const {
 
-	return (energy == x1.get_energy());
-
-}
-
-bool stat_1R::operator>(const stat_1R& x1)const
-{
-
-	return (energy > x1.get_energy());
-
+  return (energy > x1.get_energy());
 }
 
 #endif
