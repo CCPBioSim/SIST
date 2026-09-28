@@ -16,7 +16,7 @@ concurrency:
 jobs:
   python-coverage:
     name: Build main coverage baseline (Python)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
 
     permissions:
@@ -57,7 +57,7 @@ jobs:
 
   cpp-coverage:
     name: Build main coverage baseline (C++)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
 
     permissions:
@@ -135,7 +135,7 @@ jobs:
   finish:
     name: Close Coveralls build
     needs: [python-coverage, cpp-coverage]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Close parallel build
