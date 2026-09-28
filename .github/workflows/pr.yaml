@@ -40,7 +40,7 @@ jobs:
         run: python -m pytest tests/unit
 
   regression:
-    name: Regression • ${{ matrix.os }})
+    name: Regression (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
