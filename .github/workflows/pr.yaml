@@ -12,18 +12,23 @@ concurrency:
 
 jobs:
   regression:
-    name: Regression
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    name: Regression (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-26.04, macos-26-intel, macos-26]
 
     steps:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
 
-      - name: Setup Conda
-        uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4
+      - name: Setup Mamba
+        uses: conda-incubator/setup-miniconda@v4.1.0
         with:
           miniforge-variant: Miniforge3
+          mamba-version: "*"
           auto-activate: true
           activate-environment: base
           conda-remove-defaults: true
@@ -33,7 +38,7 @@ jobs:
       - name: Install conda-build
         shell: bash -l {0}
         run: |
-          conda install -y \
+          mamba install -y \
             --override-channels \
             -c conda-forge \
             conda-build
@@ -49,7 +54,7 @@ jobs:
 
   docs:
     name: Docs
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
 
     steps:
