@@ -12,7 +12,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from conftest import REPOSITORY_ROOT
 
 pytestmark = pytest.mark.regression
 
@@ -41,7 +40,8 @@ def test_master_pl_alias_matches_sist_output(
 
     runtime_directory = tmp_path_factory.mktemp("master-pl-alias")
     input_path = runtime_directory / "pbr322.toy.fa"
-    shutil.copy2(REPOSITORY_ROOT / "tests" / "data" / "pbr322.toy.fa", input_path)
+    data_path = Path(__file__).resolve().parent / "data" / "pbr322.toy.fa"
+    shutil.copy2(data_path, input_path)
 
     result = subprocess.run(
         ["master.pl", "-f", input_path.name, "-a", "M", "-b", "-p", "-r"],

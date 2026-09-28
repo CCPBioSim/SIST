@@ -54,6 +54,9 @@ tar:
 gcc:
 	make $(APP) CC="$(CXX)" CPPFLAGS="-O2 -Wall "
 
+coverage:
+	make $(APP) CC="$(CXX)" CPPFLAGS="-O0 -Wall --coverage -fprofile-abs-path" LDFLAGS="--coverage"
+
 
 ###################
 # Inference Rules #
