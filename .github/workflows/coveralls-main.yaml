@@ -116,6 +116,7 @@ jobs:
         run: python -m pytest tests/regression -vv
 
       - name: Generate lcov report
+        shell: bash -l {0}
         run: |
           gcovr --root . \
             --filter 'src/trans_three/.*' \
