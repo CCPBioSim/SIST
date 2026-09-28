@@ -2,7 +2,7 @@
 // This class is designed for three runs derived from SIDD_2R
 //
 // program to implement algorithm developed by Craig Benham
-// 
+//
 // author: Chengpeng Bi
 // modifiers: Dina Zhabinskaya, Sally Madden, Ian Korf
 // compiler: g++
@@ -18,16 +18,15 @@
 
 #include "SIDD_2R.h"
 
-class SIDD_3R : public SIDD_2R  
-{
+class SIDD_3R : public SIDD_2R {
 protected:
-	bool flag_minE3;
-	long StatesInThreeRuns;
+  bool flag_minE3;
+  long StatesInThreeRuns;
 
 public:
-	SIDD_3R();
-	virtual ~SIDD_3R();
-	bool Search_Low3RE();
+  SIDD_3R();
+  virtual ~SIDD_3R();
+  bool Search_Low3RE();
 };
 
 #endif // !defined(AFX_SIDD_3R_H__B5CD0095_10DE_4C22_A817_256ABBAD9425__INCLUDED_)

@@ -16,19 +16,19 @@
 #ifndef STAT_1R_H_
 #define STAT_1R_H_
 
-class stat_1R  
-{
+class stat_1R {
 protected:
-	int start_pos1;
-	double energy;
+  int start_pos1;
+  double energy;
+
 public:
-	stat_1R(int start_position, double energy, double rt);
-	virtual ~stat_1R();
-	int get_pos1() const{return start_pos1;}
-	bool operator <(const stat_1R&) const;
-	bool operator ==(const stat_1R&)const;
-	bool operator >(const stat_1R&) const;
-	double get_energy()const {return energy;}
+  stat_1R(int start_position, double energy, double rt);
+  virtual ~stat_1R();
+  int get_pos1() const { return start_pos1; }
+  bool operator<(const stat_1R &) const;
+  bool operator==(const stat_1R &) const;
+  bool operator>(const stat_1R &) const;
+  double get_energy() const { return energy; }
 };
 
 #endif // !defined(AFX_STAT_1R_H__ACD4635F_79AA_463A_A66C_6B1CA4476EE0__INCLUDED_)

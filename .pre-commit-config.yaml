@@ -12,7 +12,8 @@ repos:
       - id: clang-format
         files: \.(c|cc|cpp|cxx|h|hh|hpp|hxx)$
       - id: clang-tidy
-        files: \.(c|cc|cpp|cxx|h|hh|hpp|hxx)$
+        files: \.(c|cc|cpp|cxx)$
+        args: ["-checks=-*,clang-analyzer-*,bugprone-*"]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0

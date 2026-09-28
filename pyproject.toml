@@ -34,7 +34,7 @@ Repository = "https://github.com/CCPBioSim/SIST"
 [project.scripts]
 sist = "sist.cli:main"
 # Deprecated aliases for scripted workflows that still invoke the old Perl
-# script names directly. 
+# script names directly.
 "master.pl" = "sist.cli:main"
 "IR_finder.pl" = "sist.ir_finder_cli:main"
 
@@ -49,7 +49,9 @@ pre-commit = [
     "pre-commit>=4.5,<5.0",
     "ruff>=0.16,<0.17",
     "pylint>=4.0,<5.0",
-    "rstcheck>=6.2,<7.0"
+    "rstcheck>=6.2,<7.0",
+    "clang-format>=23.0,<24.0",
+    "clang-tidy>=22.0,<23.0",
 ]
 
 [tool.setuptools.packages.find]
