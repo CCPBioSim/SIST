@@ -48,6 +48,36 @@ During a normal source test run, the test fixtures create a temporary copy of
 the repository, build the C++ executables, and run the supported calculations
 from that working copy.
 
+Pre-commit hooks
+----------------
+
+SIST uses **pre-commit hooks** to maintain code quality and consistent style
+across the Python and C++ code.
+
+Install the pre-commit dependencies and enable the hooks:
+
+.. code-block:: bash
+
+   python -m pip install -e '.[pre-commit]'
+   pre-commit install
+
+Our tooling stack:
+
+* **Python linting and formatting** via ``ruff``
+* **C++ formatting and static analysis** via ``clang-format`` and ``clang-tidy``
+* **Basic repository checks** via ``pre-commit-hooks``
+* **Docstring RST validation** via ``rstcheck``
+
+Run the checks manually against the whole repository:
+
+.. code-block:: bash
+
+   pre-commit run --all-files
+
+.. note::
+
+   Pull requests must pass all pre-commit checks before being merged.
+
 Scientific regression baselines
 --------------------------------
 
