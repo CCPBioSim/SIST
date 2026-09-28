@@ -41,6 +41,7 @@ sist = "sist.cli:main"
 [project.optional-dependencies]
 testing = [
     "pytest>=9.0,<10.0",
+    "pytest-cov>=7.0,<8.0",
     "mypy>=1.14,<2.0",
 ]
 

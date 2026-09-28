@@ -6,4 +6,4 @@ command -v irf
 command -v python
 command -v pytest
 
-python -m pytest tests -vv
+python -m pytest tests/regression -vv

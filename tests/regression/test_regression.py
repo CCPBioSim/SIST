@@ -11,15 +11,9 @@ from conftest import SistRun
 pytestmark = pytest.mark.regression
 
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REFERENCE_VERSION = "v1.0.0"
 
-REFERENCE_DIRECTORY = (
-    REPOSITORY_ROOT
-    / "tests"
-    / "reference"
-    / REFERENCE_VERSION
-)
+REFERENCE_DIRECTORY = Path(__file__).resolve().parent / "reference" / REFERENCE_VERSION
 
 COMPETITION_REFERENCE = (
     REFERENCE_DIRECTORY
