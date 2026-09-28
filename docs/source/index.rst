@@ -43,5 +43,6 @@ Run a competition calculation and write the result to a file:
    user-guide
    installation
    source-usage
+   examples
    development
    citation

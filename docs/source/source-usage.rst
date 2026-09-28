@@ -154,20 +154,5 @@ in the current working directory when these calculations are run.
 Example calculation
 -------------------
 
-The repository contains an example competition calculation based on
-``pbr322.toy.fa``.
-
-The command is:
-
-.. code-block:: bash
-
-   sist \
-       -f pbr322.toy.fa \
-       -a A \
-       -o pbr322.toy.compete.txt \
-       -b \
-       -p \
-       -r
-
-The example directory also contains IRF intermediate output and an EPS
-representation of the competition result.
+See :doc:`examples` for a full worked competition calculation, including
+downloadable input/output files and an EPS representation of the result.
