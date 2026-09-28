@@ -4,9 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
-
 from conftest import SistRun
-
 
 pytestmark = pytest.mark.regression
 
@@ -15,10 +13,7 @@ REFERENCE_VERSION = "v1.0.0"
 
 REFERENCE_DIRECTORY = Path(__file__).resolve().parent / "reference" / REFERENCE_VERSION
 
-COMPETITION_REFERENCE = (
-    REFERENCE_DIRECTORY
-    / "competition.rebuilt.txt"
-)
+COMPETITION_REFERENCE = REFERENCE_DIRECTORY / "competition.rebuilt.txt"
 
 # The baselines reproduced all shared printed values exactly.
 RELATIVE_TOLERANCE = 0.0
@@ -144,9 +139,7 @@ def parse_competition_output(path: Path) -> ParsedCompetitionOutput:
             continue
 
         if line.startswith("Scaling factor "):
-            value = parse_numeric_value(
-                line.removeprefix("Scaling factor ")
-            )
+            value = parse_numeric_value(line.removeprefix("Scaling factor "))
 
             if value is None:
                 raise AssertionError(
@@ -244,11 +237,7 @@ def parse_transition_output(path: Path) -> ParsedTransitionOutput:
             base = columns[1]
             probability = float(columns[2])
 
-            energy = (
-                float(columns[3])
-                if profile_has_energy
-                else None
-            )
+            energy = float(columns[3]) if profile_has_energy else None
 
             profile[position] = TransitionProfileRow(
                 base=base,
@@ -259,9 +248,7 @@ def parse_transition_output(path: Path) -> ParsedTransitionOutput:
             continue
 
         if line.startswith("Scaling factor "):
-            value = parse_numeric_value(
-                line.removeprefix("Scaling factor ")
-            )
+            value = parse_numeric_value(line.removeprefix("Scaling factor "))
 
             if value is None:
                 raise AssertionError(
@@ -312,10 +299,7 @@ def assert_number_matches(
         expected,
         rel=RELATIVE_TOLERANCE,
         abs=ABSOLUTE_TOLERANCE,
-    ), (
-        f"{name} changed: expected {expected!r}, "
-        f"actual {actual!r}"
-    )
+    ), f"{name} changed: expected {expected!r}, actual {actual!r}"
 
 
 def assert_metadata_matches(
@@ -430,10 +414,7 @@ def test_transition_scientific_results_match_baseline(
         f"stderr:\n{process.stderr}"
     )
 
-    reference_output = (
-        REFERENCE_DIRECTORY
-        / f"{transition_run.name}.txt"
-    )
+    reference_output = REFERENCE_DIRECTORY / f"{transition_run.name}.txt"
 
     assert reference_output.is_file(), (
         f"Reference output does not exist: {reference_output}"
@@ -473,11 +454,8 @@ def test_transition_scientific_results_match_baseline(
             actual=actual_row.probability,
         )
 
-        assert (actual_row.energy is None) == (
-            expected_row.energy is None
-        ), (
-            f"{transition_run.name} energy output changed at "
-            f"position {position}"
+        assert (actual_row.energy is None) == (expected_row.energy is None), (
+            f"{transition_run.name} energy output changed at position {position}"
         )
 
         if expected_row.energy is not None:

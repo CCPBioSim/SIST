@@ -36,7 +36,7 @@ depend: $(OBJECTS:.o=.cpp)
 	$(CXX) -MM $^ > $@
 
 test:
-	./qsidd example.fasta 
+	./qsidd example.fasta
 
 tar:
 	rm -rf /tmp/$(APP)
@@ -70,4 +70,3 @@ coverage:
 ################
 
 include depend
-
