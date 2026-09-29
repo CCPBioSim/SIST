@@ -25,7 +25,7 @@ Source tests
 The pytest suite validates command-line behaviour and the maintained scientific
 reference outputs.
 
-Python 3.12 or later is supported for source testing. A direct source test run
+Python 3.12, 3.13, or 3.14 is supported for source testing. A direct source test run
 also requires:
 
 * GNU Make

@@ -17,21 +17,20 @@ requirements:
     - make
 
   host:
-    - python >=3.12
+    - python
     - pip
     - setuptools >=77,<84
 
   run:
-    - python >=3.12
+    - python >=3.12,<3.15
     - biopython >=1.85,<2.0
     - beautifulsoup4 >=4.12,<5.0
     - irf >=3.09,<3.10
 
 test:
   requires:
-    - python >=3.12
+    - python
     - pytest >=9,<10
-
   source_files:
     - tests
     - pyproject.toml

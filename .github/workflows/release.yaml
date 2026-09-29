@@ -244,16 +244,16 @@ jobs:
           conda list conda-build
           conda build --help
 
-      - name: Build package
+      - name: Build packages
         shell: bash -l {0}
         run: |
-          PKG_PATH=$(conda build conda-recipe \
+          conda build conda-recipe \
             --output \
             --override-channels \
             -c conda-forge \
-            -c bioconda)
+            -c bioconda > pkg_paths.txt
 
-          echo "PKG_PATH=$PKG_PATH" >> "$GITHUB_ENV"
+          cat pkg_paths.txt
 
           conda build conda-recipe \
             --override-channels \
@@ -261,16 +261,20 @@ jobs:
             -c bioconda \
             --no-anaconda-upload
 
-          test -f "$PKG_PATH"
-          echo "Built: $PKG_PATH"
+          while read -r pkg_path; do
+            test -f "$pkg_path"
+            echo "Built: $pkg_path"
+          done < pkg_paths.txt
 
       - name: Upload to Anaconda
         shell: bash -l {0}
         env:
           ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
-          anaconda \
-            -t "$ANACONDA_API_TOKEN" \
-            upload "$PKG_PATH" \
-            --user CCPBioSim \
-            --force
+          while read -r pkg_path; do
+            anaconda \
+              -t "$ANACONDA_API_TOKEN" \
+              upload "$pkg_path" \
+              --user CCPBioSim \
+              --force
+          done < pkg_paths.txt
