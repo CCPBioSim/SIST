@@ -60,7 +60,7 @@ A source build requires:
 
 * a C++ compiler
 * GNU Make
-* Python 3.12 or later
+* Python 3.12, 3.13, or 3.14
 * IRF 3.09 available as ``irf`` on ``PATH``
 
 Build both C++ components from the repository root:

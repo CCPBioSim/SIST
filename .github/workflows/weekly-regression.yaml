@@ -14,14 +14,13 @@ concurrency:
 
 jobs:
   regression:
-    name: SIST Regression (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    name: SIST Regression (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-26.04, macos-26-intel, macos-26]
-        python-version: ["3.12", "3.13", "3.14"]
 
     steps:
       - name: Checkout
@@ -52,5 +51,4 @@ jobs:
             --override-channels \
             -c conda-forge \
             -c bioconda \
-            --python ${{ matrix.python-version }} \
             --no-anaconda-upload
