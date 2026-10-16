@@ -1,4 +1,4 @@
-shortdesc: "SIST - A tool for calculating Stress-Induced Structural Transition probabilities in superhelical.
+shortdesc: "SIST - A tool for calculating Stress-Induced Structural Transition probabilities in superhelical."
 longdesc: "SIST calculates stress-induced structural transition probabilities in superhelical DNA, including strand separation, Z-DNA formation, cruciform extrusion, and competition between these transitions."
 category: "scientific"
 image: "sist-logo.svg"
