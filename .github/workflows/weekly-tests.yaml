@@ -1,0 +1,29 @@
+name: Weekly Unit Tests
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Unit
+    uses: CCPBioSim/.github/.github/workflows/ci-test-python.yaml@edc3732fa8d31a58312ca784e65cad9bdfba9347 # 0.13.0
+    permissions:
+      contents: read
+      checks: write
+      statuses: write
+    with:
+      package: sist
+      test-path: tests/unit
+      os: '["ubuntu-26.04", "macos-26-intel", "macos-26"]'
+      lowest-dependencies-check: true
+      coverage: false
+      timeout-minutes: 30
