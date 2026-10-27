@@ -2,53 +2,22 @@ name: Weekly Regression Tests
 
 on:
   schedule:
-    - cron: "0 8 * * 1"
+    - cron: '0 8 * * 1'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: sist-regression-${{ github.workflow }}-${{ github.ref }}
+  group: weekly-regression-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   regression:
-    name: SIST Regression (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-26.04, macos-26-intel, macos-26]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
-
-      - name: Setup Conda
-        uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4
-        with:
-          miniforge-variant: Miniforge3
-          auto-activate: true
-          activate-environment: base
-          conda-remove-defaults: true
-          channels: conda-forge,bioconda
-          channel-priority: strict
-
-      - name: Install conda-build
-        shell: bash -l {0}
-        run: |
-          conda install -y \
-            --override-channels \
-            -c conda-forge \
-            conda-build
-
-      - name: Build and run regression tests
-        shell: bash -l {0}
-        run: |
-          conda build conda-recipe \
-            --override-channels \
-            -c conda-forge \
-            -c bioconda \
-            --no-anaconda-upload
+    name: Regression
+    uses: CCPBioSim/.github/.github/workflows/ci-conda-build.yaml@edc3732fa8d31a58312ca784e65cad9bdfba9347 # 0.13.0
+    permissions:
+      contents: read
+    with:
+      os: '["ubuntu-26.04", "macos-26-intel", "macos-26"]'
+      channels: conda-forge,bioconda
