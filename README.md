@@ -3,7 +3,7 @@ SIST: Stress-Induced Structural Transitions in superhelical DNA
 
 | Category       | Badges |
 |----------------|--------|
-| **Build**      | [![PR Checks](https://github.com/CCPBioSim/SIST/actions/workflows/pr.yaml/badge.svg)](https://github.com/CCPBioSim/SIST/actions/workflows/pr.yaml) [![Daily Tests](https://github.com/CCPBioSim/SIST/actions/workflows/daily.yaml/badge.svg)](https://github.com/CCPBioSim/SIST/actions/workflows/daily.yaml) |
+| **Build**      | [![PR Checks](https://github.com/CCPBioSim/SIST/actions/workflows/pr.yaml/badge.svg)](https://github.com/CCPBioSim/SIST/actions/workflows/pr.yaml) [![Weekly Tests](https://github.com/CCPBioSim/SIST/actions/workflows/weekly-tests.yaml/badge.svg)](https://github.com/CCPBioSim/SIST/actions/workflows/weekly-tests.yaml) |
 | **Regression** | [![Weekly Regression](https://github.com/CCPBioSim/SIST/actions/workflows/weekly-regression.yaml/badge.svg)](https://github.com/CCPBioSim/SIST/actions/workflows/weekly-regression.yaml) |
 | **Documentation** | [![Weekly Docs](https://github.com/CCPBioSim/SIST/actions/workflows/weekly-docs.yaml/badge.svg)](https://github.com/CCPBioSim/SIST/actions/workflows/weekly-docs.yaml) [![Docs - Status](https://app.readthedocs.org/projects/sist/badge/?version=latest)](https://sist.readthedocs.io/en/latest/?badge=latest) |
 | **Citation**      | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22753478.svg)](https://doi.org/10.5281/zenodo.22753478) |
