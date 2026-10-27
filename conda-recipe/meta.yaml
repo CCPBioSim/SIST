@@ -23,7 +23,7 @@ requirements:
 
   run:
     - python >=3.12,<3.15
-    - biopython >=1.85,<2.0
+    - biopython >=1.87,<2.0
     - beautifulsoup4 >=4.12,<5.0
     - irf >=3.09,<3.10
 

@@ -7,180 +7,85 @@ permissions:
   contents: read
 
 concurrency:
-  group: pr-ci-${{ github.event.pull_request.number }}
+  group: pr-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   unit:
-    name: Pytest unit • ${{ matrix.os }}, Python ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-26.04, macos-26-intel, macos-26]
-        python-version: ["3.12", "3.13", "3.14"]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install testing dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e .[testing]
-
-      - name: Run unit tests
-        run: python -m pytest tests/unit
-
-  regression:
-    name: Regression (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-26.04, macos-26-intel, macos-26]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
-
-      - name: Setup Mamba
-        uses: conda-incubator/setup-miniconda@v4.1.0
-        with:
-          miniforge-variant: Miniforge3
-          mamba-version: "*"
-          auto-activate: true
-          activate-environment: base
-          conda-remove-defaults: true
-          channels: conda-forge,bioconda
-          channel-priority: strict
-
-      - name: Install conda-build
-        shell: bash -l {0}
-        run: |
-          mamba install -y \
-            --override-channels \
-            -c conda-forge \
-            conda-build
-
-      - name: Build and run regression tests
-        shell: bash -l {0}
-        run: |
-          conda build conda-recipe \
-            --override-channels \
-            -c conda-forge \
-            -c bioconda \
-            --python 3.14 \
-            --no-anaconda-upload
-
-  pre-commit:
-    name: Pre-commit
-    needs: unit
-    runs-on: ubuntu-26.04
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
-
-      - name: Set up Python 3.14
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-        with:
-          python-version: "3.14"
-
-      - name: Install pre-commit dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e .[pre-commit]
-
-      - name: Run pre-commit
-        run: |
-          pre-commit install
-          pre-commit run --all-files || {
-            git status --short
-            git diff
-            exit 1
-          }
-
-  docs:
-    name: Docs
-    needs: unit
-    runs-on: ubuntu-26.04
-    timeout-minutes: 20
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
-
-      - name: Set up Python 3.14
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-        with:
-          python-version: "3.14"
-
-      - name: Install documentation dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r docs/requirements.txt
-
-      - name: Build documentation
-        run: |
-          make -C docs clean
-          make -C docs html SPHINXOPTS="-W --keep-going"
-
-      - name: Upload documentation
-        if: success()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: docs-html
-          path: docs/build/html/
-          if-no-files-found: error
-          retention-days: 7
-
-  coverage:
-    name: Coverage
-    needs: unit
-    runs-on: ubuntu-26.04
-    timeout-minutes: 30
-
+    name: Unit
+    uses: CCPBioSim/.github/.github/workflows/ci-test-python.yaml@2bf63339f2515ec54777e952e8db3d8674d4e5ca # 0.14.0
     permissions:
       contents: read
       checks: write
       statuses: write
-      pull-requests: write
+    with:
+      package: sist
+      test-path: tests/unit
+      os: '["ubuntu-26.04", "macos-26-intel", "macos-26"]'
+      lowest-dependencies-check: true
+      coverage-flag: python
+      timeout-minutes: 15
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+  cpp-coverage:
+    name: C++ coverage
+    uses: CCPBioSim/.github/.github/workflows/ci-test-cpp-coverage.yaml@2bf63339f2515ec54777e952e8db3d8674d4e5ca # 0.14.0
+    permissions:
+      contents: read
+      checks: write
+      statuses: write
+    with:
+      conda-packages: irf>=3.09,<3.10
+      channels: conda-forge,bioconda
+      build-command: |
+        make -C src/trans_three clean
+        make -C src/trans_three coverage
+        make -C src/trans_compete clean
+        make -C src/trans_compete coverage
+      pre-test-command: |
+        export CONDA_BUILD_STATE=TEST
+        export SIST_TRANS_THREE_BIN="${GITHUB_WORKSPACE}/src/trans_three/qsidd"
+        export SIST_TRANS_COMPETE_BIN="${GITHUB_WORKSPACE}/src/trans_compete/qsidd"
+      test-path: tests/regression
+      pytest-args: -vv
+      filters: |
+        src/trans_three/.*
+        src/trans_compete/.*
+      gcovr-args: --gcov-ignore-parse-errors=suspicious_hits.warn
 
-      - name: Set up Python 3.14
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-        with:
-          python-version: "3.14"
+  coverage:
+    name: Coverage
+    needs: [unit, cpp-coverage]
+    uses: CCPBioSim/.github/.github/workflows/ci-coveralls-finish.yaml@2bf63339f2515ec54777e952e8db3d8674d4e5ca # 0.14.0
+    permissions:
+      contents: read
 
-      - name: Install testing dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e .[testing]
+  regression:
+    name: Regression
+    uses: CCPBioSim/.github/.github/workflows/ci-conda-build.yaml@2bf63339f2515ec54777e952e8db3d8674d4e5ca # 0.14.0
+    permissions:
+      contents: read
+    with:
+      os: '["ubuntu-26.04", "macos-26-intel", "macos-26"]'
+      channels: conda-forge,bioconda
+      python-versions: '["3.14"]'
+      timeout-minutes: 60
 
-      - name: Run coverage
-        run: |
-          python -m pytest tests/unit \
-            --cov sist \
-            --cov-report term-missing \
-            --cov-report xml \
-            -q
+  docs:
+    name: Docs
+    needs: unit
+    uses: CCPBioSim/.github/.github/workflows/ci-docs.yaml@2bf63339f2515ec54777e952e8db3d8674d4e5ca # 0.14.0
+    permissions:
+      contents: read
+    with:
+      requirements-file: docs/requirements.txt
+      build-dir: build
+      timeout-minutes: 20
 
-      - name: Upload coverage to Coveralls
-        uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          file: coverage.xml
-          fail-on-error: false
+  pre-commit:
+    name: Pre-commit
+    needs: unit
+    uses: CCPBioSim/.github/.github/workflows/ci-pre-commit.yaml@2bf63339f2515ec54777e952e8db3d8674d4e5ca # 0.14.0
+    permissions:
+      contents: read
+    with:
+      timeout-minutes: 15
