@@ -16,7 +16,7 @@ concurrency:
 jobs:
   python-coverage:
     name: Build main coverage baseline (Python)
-    uses: CCPBioSim/.github/.github/workflows/ci-test-python.yaml@2bf63339f2515ec54777e952e8db3d8674d4e5ca # 0.14.0
+    uses: CCPBioSim/.github/.github/workflows/ci-test-python.yaml@f72e64d2dc791ad5ceda145777a3922895d92a5d # 0.17.0
     permissions:
       contents: read
       checks: write
@@ -28,7 +28,7 @@ jobs:
 
   cpp-coverage:
     name: Build main coverage baseline (C++)
-    uses: CCPBioSim/.github/.github/workflows/ci-test-cpp-coverage.yaml@2bf63339f2515ec54777e952e8db3d8674d4e5ca # 0.14.0
+    uses: CCPBioSim/.github/.github/workflows/ci-test-cpp-coverage.yaml@f72e64d2dc791ad5ceda145777a3922895d92a5d # 0.17.0
     permissions:
       contents: read
       checks: write
@@ -55,6 +55,6 @@ jobs:
   finish:
     name: Close Coveralls build
     needs: [python-coverage, cpp-coverage]
-    uses: CCPBioSim/.github/.github/workflows/ci-coveralls-finish.yaml@2bf63339f2515ec54777e952e8db3d8674d4e5ca # 0.14.0
+    uses: CCPBioSim/.github/.github/workflows/ci-coveralls-finish.yaml@f72e64d2dc791ad5ceda145777a3922895d92a5d # 0.17.0
     permissions:
       contents: read
