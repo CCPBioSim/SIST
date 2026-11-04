@@ -1,18 +1,28 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
-  "required": ["schema_version", "status", "input", "parameters"],
+  "required": ["schema_version", "status", "input", "parameters", "profile"],
   "additionalProperties": false,
   "properties": {
     "schema_version": { "type": "string" },
     "status": { "enum": ["success", "failed"] },
     "input": { "$ref": "#/$defs/input" },
-    "parameters": { "$ref": "#/$defs/parameters" }
+    "parameters": { "$ref": "#/$defs/parameters" },
+    "profile": { "$ref": "#/$defs/profile" }
   },
   "$defs": {
     "positive_number": {
       "type": "number",
       "exclusiveMinimum": 0
+    },
+    "probability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "position_probabilities": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/probability" }
     },
     "input": {
       "type": "object",
@@ -38,6 +48,24 @@
         "superhelical_density": { "type": "number", "maximum": 0 },
         "salt_concentration_m": { "$ref": "#/$defs/positive_number" },
         "energy_threshold_kcal_per_mol": { "$ref": "#/$defs/positive_number" }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "required": ["probability"],
+      "additionalProperties": false,
+      "properties": {
+        "base": { "type": "string", "pattern": "^[ACGT]*$" },
+        "probability": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": false,
+          "properties": {
+            "melting": { "$ref": "#/$defs/position_probabilities" },
+            "z_dna": { "$ref": "#/$defs/position_probabilities" },
+            "cruciform": { "$ref": "#/$defs/position_probabilities" }
+          }
+        }
       }
     }
   }
