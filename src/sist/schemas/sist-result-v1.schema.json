@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "status"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string" },
+    "status": { "enum": ["success", "failed"] }
+  }
+}
