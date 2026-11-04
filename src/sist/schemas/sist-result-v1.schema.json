@@ -1,10 +1,36 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
-  "required": ["schema_version", "status"],
+  "required": ["schema_version", "status", "input", "parameters"],
   "additionalProperties": false,
   "properties": {
     "schema_version": { "type": "string" },
-    "status": { "enum": ["success", "failed"] }
+    "status": { "enum": ["success", "failed"] },
+    "input": {
+      "type": "object",
+      "required": ["sequence_file", "sequence_length_bp", "molecule_type"],
+      "additionalProperties": false,
+      "properties": {
+        "sequence_file": { "type": "string" },
+        "sequence_length_bp": { "type": "integer", "minimum": 1 },
+        "molecule_type": { "enum": ["linear", "circular"] }
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "required": [
+        "temperature_k",
+        "superhelical_density",
+        "salt_concentration_m",
+        "energy_threshold_kcal_per_mol"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "temperature_k": { "type": "number", "exclusiveMinimum": 0 },
+        "superhelical_density": { "type": "number", "maximum": 0 },
+        "salt_concentration_m": { "type": "number", "exclusiveMinimum": 0 },
+        "energy_threshold_kcal_per_mol": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    }
   }
 }
