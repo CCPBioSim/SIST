@@ -6,6 +6,14 @@
   "properties": {
     "schema_version": { "type": "string" },
     "status": { "enum": ["success", "failed"] },
+    "input": { "$ref": "#/$defs/input" },
+    "parameters": { "$ref": "#/$defs/parameters" }
+  },
+  "$defs": {
+    "positive_number": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
     "input": {
       "type": "object",
       "required": ["sequence_file", "sequence_length_bp", "molecule_type"],
@@ -26,10 +34,10 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "temperature_k": { "type": "number", "exclusiveMinimum": 0 },
+        "temperature_k": { "$ref": "#/$defs/positive_number" },
         "superhelical_density": { "type": "number", "maximum": 0 },
-        "salt_concentration_m": { "type": "number", "exclusiveMinimum": 0 },
-        "energy_threshold_kcal_per_mol": { "type": "number", "exclusiveMinimum": 0 }
+        "salt_concentration_m": { "$ref": "#/$defs/positive_number" },
+        "energy_threshold_kcal_per_mol": { "$ref": "#/$defs/positive_number" }
       }
     }
   }
