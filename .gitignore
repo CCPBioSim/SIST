@@ -69,7 +69,6 @@ cmake-build-*/
 
 # Sphinx build output
 docs/build/
-docs/source/_autosummary/
 
 # Python environments, caches, and packaging
 .venv/
