@@ -13,33 +13,18 @@ copyright = "2026, CCPBioSim"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    "sphinx.ext.autosummary",
-    "sphinx.ext.autodoc",
     "sphinx.ext.mathjax",
-    "sphinx.ext.viewcode",
-    "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "sphinx.ext.extlinks",
-    "nbsphinx",
-    "sphinx_copybutton",
 ]
-
-autosummary_generate = True
-napoleon_google_docstring = False
-napoleon_use_param = False
-napoleon_use_ivar = True
 
 templates_path = ["_templates"]
 exclude_patterns = []
 
-
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "furo"
-html_theme_options = {
-    "dark_logo": "logos/SIST-logo-white-text.svg",
-    "light_logo": "logos/SIST-logo-black-text.svg",
-}
-
+# The shared CCPBioSim theme.
+html_theme = "ccpbiosim_sphinx_theme"
+html_context = {"github_repo": "SIST"}
 html_static_path = ["_static"]
