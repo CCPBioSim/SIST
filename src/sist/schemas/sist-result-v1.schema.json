@@ -1,5 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/CCPBioSim/SIST/main/src/sist/schemas/sist-result-v1.schema.json",
+  "title": "SIST result",
+  "description": "Structured result of one SIST calculation, version 1. Accepts any schema_version 1.x.y.",
   "type": "object",
   "required": [
     "schema_version",
@@ -14,7 +17,12 @@
   ],
   "additionalProperties": false,
   "properties": {
-    "schema_version": { "type": "string" },
+    "$schema": { "type": "string" },
+    "schema_version": {
+      "description": "Version of the result model, as MAJOR.MINOR.PATCH.",
+      "type": "string",
+      "pattern": "^1\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
     "status": { "enum": ["success", "failed"] },
     "provenance": { "$ref": "#/$defs/provenance" },
     "calculation": { "$ref": "#/$defs/calculation" },
