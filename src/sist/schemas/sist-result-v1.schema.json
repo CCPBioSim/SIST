@@ -146,7 +146,9 @@
       "additionalProperties": false,
       "properties": {
         "sequence_file": { "type": "string" },
+        "sequence_name": { "type": ["string", "null"] },
         "sequence_length_bp": { "type": "integer", "minimum": 1 },
+        "sequence_sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
         "molecule_type": { "enum": ["linear", "circular"] }
       }
     },
@@ -165,7 +167,10 @@
         "superhelical_density": { "type": "number", "maximum": 0 },
         "salt_concentration_m": { "$ref": "#/$defs/positive_number" },
         "energy_threshold_kcal_per_mol": { "$ref": "#/$defs/positive_number" },
-        "melting_energetics": { "enum": ["copolymeric", "nearest_neighbor", null] }
+        "melting_energetics": { "enum": ["copolymeric", "nearest_neighbor", null] },
+        "cruciform_salt_concentration_m": {
+          "oneOf": [{ "$ref": "#/$defs/positive_number" }, { "type": "null" }]
+        }
       }
     },
     "per_transition_number": {
