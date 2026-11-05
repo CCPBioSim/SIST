@@ -8,7 +8,9 @@
     "status": { "enum": ["success", "failed"] },
     "input": { "$ref": "#/$defs/input" },
     "parameters": { "$ref": "#/$defs/parameters" },
-    "profile": { "$ref": "#/$defs/profile" }
+    "profile": {
+      "oneOf": [{ "$ref": "#/$defs/profile" }, { "type": "null" }]
+    }
   },
   "$defs": {
     "positive_number": {
@@ -19,6 +21,9 @@
       "type": "number",
       "minimum": 0,
       "maximum": 1
+    },
+    "nullable_number": {
+      "type": ["number", "null"]
     },
     "position_probabilities": {
       "type": "array",
@@ -40,14 +45,16 @@
         "temperature_k",
         "superhelical_density",
         "salt_concentration_m",
-        "energy_threshold_kcal_per_mol"
+        "energy_threshold_kcal_per_mol",
+        "melting_energetics"
       ],
       "additionalProperties": false,
       "properties": {
         "temperature_k": { "$ref": "#/$defs/positive_number" },
         "superhelical_density": { "type": "number", "maximum": 0 },
         "salt_concentration_m": { "$ref": "#/$defs/positive_number" },
-        "energy_threshold_kcal_per_mol": { "$ref": "#/$defs/positive_number" }
+        "energy_threshold_kcal_per_mol": { "$ref": "#/$defs/positive_number" },
+        "melting_energetics": { "enum": ["copolymeric", "nearest_neighbor", null] }
       }
     },
     "profile": {
@@ -64,6 +71,16 @@
             "melting": { "$ref": "#/$defs/position_probabilities" },
             "z_dna": { "$ref": "#/$defs/position_probabilities" },
             "cruciform": { "$ref": "#/$defs/position_probabilities" }
+          }
+        },
+        "free_energy_kcal_per_mol": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "melting": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/nullable_number" }
+            }
           }
         }
       }
