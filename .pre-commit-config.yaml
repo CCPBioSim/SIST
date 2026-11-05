@@ -7,7 +7,7 @@ repos:
       - id: ruff-format
 
   - repo: https://github.com/pocc/pre-commit-hooks
-    rev: v1.3.5
+    rev: v1.4.0
     hooks:
       - id: clang-format
         files: \.(c|cc|cpp|cxx|h|hh|hpp|hxx)$
