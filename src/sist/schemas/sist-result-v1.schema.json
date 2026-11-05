@@ -1,16 +1,31 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
-  "required": ["schema_version", "status", "calculation", "input", "parameters", "profile", "error"],
+  "required": [
+    "schema_version",
+    "status",
+    "provenance",
+    "calculation",
+    "input",
+    "parameters",
+    "profile",
+    "warnings",
+    "error"
+  ],
   "additionalProperties": false,
   "properties": {
     "schema_version": { "type": "string" },
     "status": { "enum": ["success", "failed"] },
+    "provenance": { "$ref": "#/$defs/provenance" },
     "calculation": { "$ref": "#/$defs/calculation" },
     "input": { "$ref": "#/$defs/input" },
     "parameters": { "$ref": "#/$defs/parameters" },
     "profile": {
       "oneOf": [{ "$ref": "#/$defs/profile" }, { "type": "null" }]
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/warning" }
     },
     "error": {
       "oneOf": [{ "$ref": "#/$defs/error" }, { "type": "null" }]
@@ -62,6 +77,8 @@
   ],
   "$defs": {
     "transition": { "enum": ["melting", "z_dna", "cruciform"] },
+    "code": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "timestamp": { "type": ["string", "null"], "format": "date-time" },
     "positive_number": {
       "type": "number",
       "exclusiveMinimum": 0
@@ -148,13 +165,64 @@
         }
       }
     },
-    "error": {
+    "provenance": {
       "type": "object",
-      "required": ["code", "message"],
+      "required": ["software", "environment", "command", "started_at", "finished_at", "wall_time_s"],
       "additionalProperties": false,
       "properties": {
-        "code": { "type": "string" },
-        "message": { "type": "string" }
+        "software": {
+          "type": "object",
+          "required": ["name", "version", "git_sha", "engine", "irf_version"],
+          "additionalProperties": false,
+          "properties": {
+            "name": { "const": "SIST" },
+            "version": { "type": "string", "minLength": 1 },
+            "git_sha": { "type": ["string", "null"], "pattern": "^[0-9a-f]{7,40}$" },
+            "engine": { "enum": ["trans_three", "trans_compete", null] },
+            "irf_version": { "type": ["string", "null"] }
+          }
+        },
+        "environment": {
+          "type": "object",
+          "required": ["python", "platform"],
+          "additionalProperties": false,
+          "properties": {
+            "python": { "type": "string" },
+            "platform": { "type": "string" }
+          }
+        },
+        "command": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "started_at": { "$ref": "#/$defs/timestamp" },
+        "finished_at": { "$ref": "#/$defs/timestamp" },
+        "wall_time_s": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "required": ["code", "message", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "$ref": "#/$defs/code" },
+        "message": { "type": "string" },
+        "source": { "enum": ["sist", "ir_finder", "qsidd"] },
+        "details": { "type": "object" }
+      }
+    },
+    "error": {
+      "type": "object",
+      "required": ["code", "message", "stage"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "$ref": "#/$defs/code" },
+        "message": { "type": "string" },
+        "stage": { "enum": ["validation", "input", "ir_finder", "qsidd", "output", "internal"] },
+        "exit_code": { "type": ["integer", "null"] },
+        "stderr": { "type": ["string", "null"] },
+        "details": { "type": "object" }
       }
     },
     "algorithm_M": {
