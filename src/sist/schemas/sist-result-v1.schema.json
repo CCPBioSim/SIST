@@ -1,11 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
-  "required": ["schema_version", "status", "input", "parameters", "profile", "error"],
+  "required": ["schema_version", "status", "calculation", "input", "parameters", "profile", "error"],
   "additionalProperties": false,
   "properties": {
     "schema_version": { "type": "string" },
     "status": { "enum": ["success", "failed"] },
+    "calculation": { "$ref": "#/$defs/calculation" },
     "input": { "$ref": "#/$defs/input" },
     "parameters": { "$ref": "#/$defs/parameters" },
     "profile": {
@@ -33,9 +34,34 @@
           "error": { "type": "object" }
         }
       }
+    },
+    {
+      "if": {
+        "properties": { "calculation": { "properties": { "algorithm": { "const": "M" } } } }
+      },
+      "then": { "$ref": "#/$defs/algorithm_M" }
+    },
+    {
+      "if": {
+        "properties": { "calculation": { "properties": { "algorithm": { "const": "Z" } } } }
+      },
+      "then": { "$ref": "#/$defs/algorithm_Z" }
+    },
+    {
+      "if": {
+        "properties": { "calculation": { "properties": { "algorithm": { "const": "C" } } } }
+      },
+      "then": { "$ref": "#/$defs/algorithm_C" }
+    },
+    {
+      "if": {
+        "properties": { "calculation": { "properties": { "algorithm": { "const": "A" } } } }
+      },
+      "then": { "$ref": "#/$defs/algorithm_A" }
     }
   ],
   "$defs": {
+    "transition": { "enum": ["melting", "z_dna", "cruciform"] },
     "positive_number": {
       "type": "number",
       "exclusiveMinimum": 0
@@ -51,6 +77,20 @@
     "position_probabilities": {
       "type": "array",
       "items": { "$ref": "#/$defs/probability" }
+    },
+    "calculation": {
+      "type": "object",
+      "required": ["algorithm", "transitions"],
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": { "enum": ["M", "Z", "C", "A"] },
+        "transitions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/transition" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
     },
     "input": {
       "type": "object",
@@ -115,6 +155,61 @@
       "properties": {
         "code": { "type": "string" },
         "message": { "type": "string" }
+      }
+    },
+    "algorithm_M": {
+      "properties": {
+        "calculation": { "properties": { "transitions": { "const": ["melting"] } } },
+        "profile": {
+          "if": { "type": "object" },
+          "then": {
+            "properties": {
+              "probability": { "required": ["melting"], "maxProperties": 1 }
+            }
+          }
+        }
+      }
+    },
+    "algorithm_Z": {
+      "properties": {
+        "calculation": { "properties": { "transitions": { "const": ["z_dna"] } } },
+        "profile": {
+          "if": { "type": "object" },
+          "then": {
+            "properties": {
+              "probability": { "required": ["z_dna"], "maxProperties": 1 }
+            },
+            "not": { "required": ["free_energy_kcal_per_mol"] }
+          }
+        }
+      }
+    },
+    "algorithm_C": {
+      "properties": {
+        "calculation": { "properties": { "transitions": { "const": ["cruciform"] } } },
+        "profile": {
+          "if": { "type": "object" },
+          "then": {
+            "properties": {
+              "probability": { "required": ["cruciform"], "maxProperties": 1 }
+            },
+            "not": { "required": ["free_energy_kcal_per_mol"] }
+          }
+        }
+      }
+    },
+    "algorithm_A": {
+      "properties": {
+        "calculation": { "properties": { "transitions": { "const": ["melting", "z_dna", "cruciform"] } } },
+        "profile": {
+          "if": { "type": "object" },
+          "then": {
+            "properties": {
+              "probability": { "required": ["melting", "z_dna", "cruciform"], "maxProperties": 3 }
+            },
+            "not": { "required": ["free_energy_kcal_per_mol"] }
+          }
+        }
       }
     }
   }
