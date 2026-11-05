@@ -11,6 +11,7 @@
     "calculation",
     "input",
     "parameters",
+    "derived_parameters",
     "summary",
     "profile",
     "warnings",
@@ -29,11 +30,23 @@
     "calculation": { "$ref": "#/$defs/calculation" },
     "input": { "$ref": "#/$defs/input" },
     "parameters": { "$ref": "#/$defs/parameters" },
+    "derived_parameters": {
+      "oneOf": [{ "$ref": "#/$defs/derived_parameters" }, { "type": "null" }]
+    },
     "summary": {
       "oneOf": [{ "$ref": "#/$defs/summary" }, { "type": "null" }]
     },
     "profile": {
       "oneOf": [{ "$ref": "#/$defs/profile" }, { "type": "null" }]
+    },
+    "inverted_repeats": {
+      "oneOf": [
+        { "type": "array", "items": { "$ref": "#/$defs/inverted_repeat" } },
+        { "type": "null" }
+      ]
+    },
+    "diagnostics": {
+      "oneOf": [{ "$ref": "#/$defs/diagnostics" }, { "type": "null" }]
     },
     "warnings": {
       "type": "array",
@@ -48,6 +61,7 @@
       "if": { "properties": { "status": { "const": "success" } } },
       "then": {
         "properties": {
+          "derived_parameters": { "type": "object" },
           "summary": { "type": "object" },
           "profile": { "type": "object" },
           "error": { "type": "null" }
@@ -152,6 +166,60 @@
         "salt_concentration_m": { "$ref": "#/$defs/positive_number" },
         "energy_threshold_kcal_per_mol": { "$ref": "#/$defs/positive_number" },
         "melting_energetics": { "enum": ["copolymeric", "nearest_neighbor", null] }
+      }
+    },
+    "per_transition_number": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "melting": { "type": "number" },
+        "z_dna": { "type": "number" },
+        "cruciform": { "type": "number" }
+      }
+    },
+    "derived_parameters": {
+      "type": "object",
+      "required": [
+        "linking_difference_turns",
+        "torsional_stiffness_kcal_bp_per_rad2",
+        "nucleation_energy_kcal_per_mol",
+        "bat_kcal_per_mol",
+        "bgc_kcal_per_mol"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "linking_difference_turns": { "type": "number" },
+        "torsional_stiffness_kcal_bp_per_rad2": { "$ref": "#/$defs/positive_number" },
+        "nucleation_energy_kcal_per_mol": { "$ref": "#/$defs/per_transition_number" },
+        "bat_kcal_per_mol": { "$ref": "#/$defs/nullable_number" },
+        "bgc_kcal_per_mol": { "$ref": "#/$defs/nullable_number" }
+      }
+    },
+    "inverted_repeat": {
+      "type": "object",
+      "required": ["start", "length_bp", "energy_kcal_per_mol"],
+      "additionalProperties": false,
+      "properties": {
+        "start": { "type": "integer", "minimum": 1 },
+        "length_bp": { "type": "integer", "minimum": 1 },
+        "energy_kcal_per_mol": { "type": "number" }
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "scaling_factor": { "type": "number" },
+        "energy_window": {
+          "type": "object",
+          "required": ["min_energy_kcal_per_mol", "max_energy_kcal_per_mol"],
+          "additionalProperties": false,
+          "properties": {
+            "min_energy_kcal_per_mol": { "type": "number" },
+            "max_energy_kcal_per_mol": { "type": "number" }
+          }
+        }
       }
     },
     "state_counts": {
