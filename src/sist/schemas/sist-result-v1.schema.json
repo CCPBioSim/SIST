@@ -11,6 +11,7 @@
     "calculation",
     "input",
     "parameters",
+    "summary",
     "profile",
     "warnings",
     "error"
@@ -28,6 +29,9 @@
     "calculation": { "$ref": "#/$defs/calculation" },
     "input": { "$ref": "#/$defs/input" },
     "parameters": { "$ref": "#/$defs/parameters" },
+    "summary": {
+      "oneOf": [{ "$ref": "#/$defs/summary" }, { "type": "null" }]
+    },
     "profile": {
       "oneOf": [{ "$ref": "#/$defs/profile" }, { "type": "null" }]
     },
@@ -44,6 +48,7 @@
       "if": { "properties": { "status": { "const": "success" } } },
       "then": {
         "properties": {
+          "summary": { "type": "object" },
           "profile": { "type": "object" },
           "error": { "type": "null" }
         }
@@ -53,6 +58,7 @@
       "if": { "properties": { "status": { "const": "failed" } } },
       "then": {
         "properties": {
+          "summary": { "type": "null" },
           "profile": { "type": "null" },
           "error": { "type": "object" }
         }
@@ -95,6 +101,9 @@
       "type": "number",
       "minimum": 0,
       "maximum": 1
+    },
+    "nullable_probability": {
+      "oneOf": [{ "$ref": "#/$defs/probability" }, { "type": "null" }]
     },
     "nullable_number": {
       "type": ["number", "null"]
@@ -143,6 +152,96 @@
         "salt_concentration_m": { "$ref": "#/$defs/positive_number" },
         "energy_threshold_kcal_per_mol": { "$ref": "#/$defs/positive_number" },
         "melting_energetics": { "enum": ["copolymeric", "nearest_neighbor", null] }
+      }
+    },
+    "state_counts": {
+      "type": "object",
+      "required": ["one_run", "two_run", "three_run", "four_run", "total"],
+      "additionalProperties": false,
+      "properties": {
+        "one_run": { "type": "integer", "minimum": 0 },
+        "two_run": { "type": "integer", "minimum": 0 },
+        "three_run": { "type": "integer", "minimum": 0 },
+        "four_run": { "type": "integer", "minimum": 0 },
+        "total": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "transition_summary": {
+      "type": "object",
+      "required": ["probability", "expected_runs", "expected_transformed_bp"],
+      "additionalProperties": false,
+      "properties": {
+        "probability": { "$ref": "#/$defs/probability" },
+        "expected_runs": { "type": "number", "minimum": 0 },
+        "expected_transformed_bp": { "type": "number", "minimum": 0 }
+      }
+    },
+    "pair_matrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "melting": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "z_dna": { "$ref": "#/$defs/nullable_probability" },
+            "cruciform": { "$ref": "#/$defs/nullable_probability" }
+          }
+        },
+        "z_dna": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "melting": { "$ref": "#/$defs/nullable_probability" },
+            "cruciform": { "$ref": "#/$defs/nullable_probability" }
+          }
+        },
+        "cruciform": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "melting": { "$ref": "#/$defs/nullable_probability" },
+            "z_dna": { "$ref": "#/$defs/nullable_probability" }
+          }
+        }
+      }
+    },
+    "pairwise": {
+      "type": "object",
+      "required": ["joint_probability", "conditional_probability", "conditional_probability_given_absent"],
+      "additionalProperties": false,
+      "properties": {
+        "joint_probability": { "$ref": "#/$defs/pair_matrix" },
+        "conditional_probability": { "$ref": "#/$defs/pair_matrix" },
+        "conditional_probability_given_absent": { "$ref": "#/$defs/pair_matrix" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "ln_partition_function",
+        "partition_function",
+        "average_number_of_runs",
+        "state_counts",
+        "transitions"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "ln_partition_function": { "type": "number" },
+        "partition_function": { "$ref": "#/$defs/nullable_number" },
+        "average_number_of_runs": { "type": "number", "minimum": 0 },
+        "state_counts": { "$ref": "#/$defs/state_counts" },
+        "transitions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": false,
+          "properties": {
+            "melting": { "$ref": "#/$defs/transition_summary" },
+            "z_dna": { "$ref": "#/$defs/transition_summary" },
+            "cruciform": { "$ref": "#/$defs/transition_summary" }
+          }
+        },
+        "pairwise": { "$ref": "#/$defs/pairwise" }
       }
     },
     "profile": {
@@ -236,6 +335,15 @@
     "algorithm_M": {
       "properties": {
         "calculation": { "properties": { "transitions": { "const": ["melting"] } } },
+        "summary": {
+          "if": { "type": "object" },
+          "then": {
+            "properties": {
+              "transitions": { "required": ["melting"], "maxProperties": 1 }
+            },
+            "not": { "required": ["pairwise"] }
+          }
+        },
         "profile": {
           "if": { "type": "object" },
           "then": {
@@ -249,6 +357,15 @@
     "algorithm_Z": {
       "properties": {
         "calculation": { "properties": { "transitions": { "const": ["z_dna"] } } },
+        "summary": {
+          "if": { "type": "object" },
+          "then": {
+            "properties": {
+              "transitions": { "required": ["z_dna"], "maxProperties": 1 }
+            },
+            "not": { "required": ["pairwise"] }
+          }
+        },
         "profile": {
           "if": { "type": "object" },
           "then": {
@@ -263,6 +380,15 @@
     "algorithm_C": {
       "properties": {
         "calculation": { "properties": { "transitions": { "const": ["cruciform"] } } },
+        "summary": {
+          "if": { "type": "object" },
+          "then": {
+            "properties": {
+              "transitions": { "required": ["cruciform"], "maxProperties": 1 }
+            },
+            "not": { "required": ["pairwise"] }
+          }
+        },
         "profile": {
           "if": { "type": "object" },
           "then": {
@@ -277,6 +403,14 @@
     "algorithm_A": {
       "properties": {
         "calculation": { "properties": { "transitions": { "const": ["melting", "z_dna", "cruciform"] } } },
+        "summary": {
+          "if": { "type": "object" },
+          "then": {
+            "properties": {
+              "transitions": { "required": ["melting", "z_dna", "cruciform"], "maxProperties": 3 }
+            }
+          }
+        },
         "profile": {
           "if": { "type": "object" },
           "then": {
