@@ -1,0 +1,52 @@
+{
+  "$schema": "https://raw.githubusercontent.com/CCPBioSim/SIST/main/src/sist/schemas/sist-result-v1.schema.json",
+  "schema_version": "1.0.0",
+  "status": "failed",
+  "provenance": {
+    "software": {
+      "name": "SIST",
+      "version": "1.1.0",
+      "git_sha": "5c5a7629fd1dcfb60a28ead8138dc5a2cf029366",
+      "engine": "trans_compete",
+      "irf_version": "3.05"
+    },
+    "environment": {
+      "python": "3.13.13",
+      "platform": "Linux-7.0.0-1017-oem-x86_64-with-glibc2.43"
+    },
+    "command": ["sist", "-a", "A", "-f", "pbr322.toy.fa", "-o", "competition-failed-no-irf.json"],
+    "started_at": "2026-11-06T10:07:00Z",
+    "finished_at": "2026-11-06T10:07:00Z",
+    "wall_time_s": 0.1
+  },
+  "calculation": {
+    "algorithm": "A",
+    "transitions": ["melting", "z_dna", "cruciform"]
+  },
+  "input": {
+    "sequence_file": "pbr322.toy.fa",
+    "sequence_name": null,
+    "sequence_length_bp": 4361,
+    "sequence_sha256": "c8e1e7205eabb7d8f8252397d831e779eca676d4e7faf81cbdd9738497adc5c6",
+    "molecule_type": "linear"
+  },
+  "parameters": {
+    "temperature_k": 310.0,
+    "superhelical_density": -0.06,
+    "salt_concentration_m": 0.01,
+    "energy_threshold_kcal_per_mol": 12.0,
+    "melting_energetics": "copolymeric",
+    "cruciform_salt_concentration_m": 0.01
+  },
+  "derived_parameters": null,
+  "summary": null,
+  "profile": null,
+  "warnings": [],
+  "error": {
+    "code": "irf_not_found",
+    "stage": "ir_finder",
+    "message": "The Inverted Repeats Finder executable 'irf' was not found on PATH. Algorithms C and A need it.",
+    "exit_code": null,
+    "stderr": null
+  }
+}
