@@ -340,29 +340,22 @@
       }
     },
     "state_counts": {
-      "description": "Number of states counted inside the energy window, by number of runs.",
+      "description": "Number of states counted inside the energy window, by number of runs. The zero-run state (nothing transformed) is not included.",
       "type": "object",
-      "required": ["one_run", "two_run", "three_run", "four_run", "total"],
+      "required": ["by_number_of_runs", "total"],
       "additionalProperties": false,
       "properties": {
-        "one_run": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "two_run": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "three_run": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "four_run": {
-          "type": "integer",
-          "minimum": 0
+        "by_number_of_runs": {
+          "description": "Entry k is the number of states with k + 1 runs, so the first entry counts one-run states. The length is the largest number of runs the search considers, which is 4 today.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 1
         },
         "total": {
-          "description": "All states counted.",
+          "description": "All states counted: the sum of by_number_of_runs.",
           "type": "integer",
           "minimum": 0
         }
