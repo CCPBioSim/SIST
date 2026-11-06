@@ -115,58 +115,6 @@
           "error": { "type": "object" }
         }
       }
-    },
-    {
-      "description": "Apply the melting (M) rules.",
-      "if": {
-        "properties": {
-          "calculation": {
-            "properties": {
-              "algorithm": { "const": "M" }
-            }
-          }
-        }
-      },
-      "then": { "$ref": "#/$defs/algorithm_M" }
-    },
-    {
-      "description": "Apply the Z-DNA (Z) rules.",
-      "if": {
-        "properties": {
-          "calculation": {
-            "properties": {
-              "algorithm": { "const": "Z" }
-            }
-          }
-        }
-      },
-      "then": { "$ref": "#/$defs/algorithm_Z" }
-    },
-    {
-      "description": "Apply the cruciform (C) rules.",
-      "if": {
-        "properties": {
-          "calculation": {
-            "properties": {
-              "algorithm": { "const": "C" }
-            }
-          }
-        }
-      },
-      "then": { "$ref": "#/$defs/algorithm_C" }
-    },
-    {
-      "description": "Apply the competition (A) rules.",
-      "if": {
-        "properties": {
-          "calculation": {
-            "properties": {
-              "algorithm": { "const": "A" }
-            }
-          }
-        }
-      },
-      "then": { "$ref": "#/$defs/algorithm_A" }
     }
   ],
   "$defs": {
@@ -224,7 +172,7 @@
           "enum": ["M", "Z", "C", "A"]
         },
         "transitions": {
-          "description": "Transitions included in the calculation. Fixed by the algorithm.",
+          "description": "Transitions included in the calculation, set by the algorithm. The results contain exactly these transitions; the schema cannot check this, so sist.schema.validate does.",
           "type": "array",
           "items": { "$ref": "#/$defs/transition" },
           "minItems": 1,
@@ -453,7 +401,7 @@
       }
     },
     "pairwise": {
-      "description": "Probabilities for pairs of transitions. Competition (A) only. A value is null if it is undefined.",
+      "description": "Probabilities for pairs of transitions. Only for calculations with more than one transition, which today means competition (A). A value is null if it is undefined.",
       "type": "object",
       "required": [
         "joint_probability",
@@ -513,7 +461,7 @@
           "additionalProperties": { "$ref": "#/$defs/transition_summary" }
         },
         "pairwise": {
-          "description": "Probabilities for pairs of transitions. Competition (A) only.",
+          "description": "Probabilities for pairs of transitions. Only for calculations with more than one transition.",
           "$ref": "#/$defs/pairwise"
         }
       }
@@ -678,140 +626,6 @@
         "details": {
           "description": "Extra values about the error.",
           "type": "object"
-        }
-      }
-    },
-    "algorithm_M": {
-      "description": "Rules for melting (M) runs: melting results only, and no pairwise values.",
-      "properties": {
-        "calculation": {
-          "properties": {
-            "transitions": { "const": ["melting"] }
-          }
-        },
-        "summary": {
-          "if": { "type": "object" },
-          "then": {
-            "properties": {
-              "transitions": {
-                "required": ["melting"],
-                "maxProperties": 1
-              }
-            },
-            "not": { "required": ["pairwise"] }
-          }
-        },
-        "profile": {
-          "if": { "type": "object" },
-          "then": {
-            "properties": {
-              "probability": {
-                "required": ["melting"],
-                "maxProperties": 1
-              }
-            }
-          }
-        }
-      }
-    },
-    "algorithm_Z": {
-      "description": "Rules for Z-DNA (Z) runs: Z-DNA results only, no pairwise values and no G(x).",
-      "properties": {
-        "calculation": {
-          "properties": {
-            "transitions": { "const": ["z_dna"] }
-          }
-        },
-        "summary": {
-          "if": { "type": "object" },
-          "then": {
-            "properties": {
-              "transitions": {
-                "required": ["z_dna"],
-                "maxProperties": 1
-              }
-            },
-            "not": { "required": ["pairwise"] }
-          }
-        },
-        "profile": {
-          "if": { "type": "object" },
-          "then": {
-            "properties": {
-              "probability": {
-                "required": ["z_dna"],
-                "maxProperties": 1
-              }
-            },
-            "not": { "required": ["free_energy_kcal_per_mol"] }
-          }
-        }
-      }
-    },
-    "algorithm_C": {
-      "description": "Rules for cruciform (C) runs: cruciform results only, no pairwise values and no G(x).",
-      "properties": {
-        "calculation": {
-          "properties": {
-            "transitions": { "const": ["cruciform"] }
-          }
-        },
-        "summary": {
-          "if": { "type": "object" },
-          "then": {
-            "properties": {
-              "transitions": {
-                "required": ["cruciform"],
-                "maxProperties": 1
-              }
-            },
-            "not": { "required": ["pairwise"] }
-          }
-        },
-        "profile": {
-          "if": { "type": "object" },
-          "then": {
-            "properties": {
-              "probability": {
-                "required": ["cruciform"],
-                "maxProperties": 1
-              }
-            },
-            "not": { "required": ["free_energy_kcal_per_mol"] }
-          }
-        }
-      }
-    },
-    "algorithm_A": {
-      "description": "Rules for competition (A) runs: results for all three transitions, and no G(x).",
-      "properties": {
-        "calculation": {
-          "properties": {
-            "transitions": { "const": ["melting", "z_dna", "cruciform"] }
-          }
-        },
-        "summary": {
-          "if": { "type": "object" },
-          "then": {
-            "properties": {
-              "transitions": {
-                "required": ["melting", "z_dna", "cruciform"],
-                "maxProperties": 3
-              }
-            }
-          }
-        },
-        "profile": {
-          "if": { "type": "object" },
-          "then": {
-            "properties": {
-              "probability": {
-                "required": ["melting", "z_dna", "cruciform"],
-                "maxProperties": 3
-              }
-            },
-            "not": { "required": ["free_energy_kcal_per_mol"] }
-          }
         }
       }
     }
