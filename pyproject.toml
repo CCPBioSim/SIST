@@ -58,6 +58,9 @@ pre-commit = [
 where = ["src"]
 include = ["sist*"]
 
+[tool.setuptools.package-data]
+sist = ["schemas/*.json"]
+
 [tool.setuptools.dynamic]
 version = { attr = "sist.__version__" }
 
