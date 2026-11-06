@@ -187,8 +187,8 @@
       "additionalProperties": false,
       "properties": {
         "sequence_file": {
-          "description": "Sequence file path, as given on the command line.",
-          "type": "string"
+          "description": "Sequence file path, as given. Null if the sequence was passed in directly rather than read from a file, for example when SIST is used from Python.",
+          "type": ["string", "null"]
         },
         "sequence_name": {
           "description": "FASTA header without the leading '>'. Null if the file has no header.",
@@ -227,9 +227,8 @@
           "$ref": "#/$defs/positive_number"
         },
         "superhelical_density": {
-          "description": "Superhelical density (sigma), dimensionless. SIST models negative supercoiling, so a positive value given on the command line is used as its negative.",
-          "type": "number",
-          "maximum": 0
+          "description": "Superhelical density (sigma) used by the calculation, dimensionless. Today SIST only models negative supercoiling, so a positive value given on the command line is used as its negative and this value is never above 0.",
+          "type": "number"
         },
         "salt_concentration_m": {
           "description": "Salt concentration (ionic strength) in mol/L, used by qsidd.",
@@ -281,11 +280,11 @@
           "$ref": "#/$defs/per_transition_number"
         },
         "bat_kcal_per_mol": {
-          "description": "Copolymeric melting free energy of an A-T pair, in kcal/mol. Null if melting is not part of the calculation.",
+          "description": "Copolymeric melting free energy of an A-T pair, in kcal/mol. Used for copolymeric melting and for the cruciform nucleation energy. Null for Z-DNA runs, where it is not used.",
           "$ref": "#/$defs/nullable_number"
         },
         "bgc_kcal_per_mol": {
-          "description": "Copolymeric melting free energy of a G-C pair, in kcal/mol. Null if melting is not part of the calculation.",
+          "description": "Copolymeric melting free energy of a G-C pair, in kcal/mol. Used for copolymeric melting. Null for Z-DNA runs, where it is not used.",
           "$ref": "#/$defs/nullable_number"
         }
       }
@@ -546,8 +545,8 @@
           }
         },
         "command": {
-          "description": "Command line as given, one argument per entry, starting with the program name.",
-          "type": "array",
+          "description": "Command line as given, one argument per entry, starting with the program name. Null if SIST was run from Python rather than the command line.",
+          "type": ["array", "null"],
           "items": { "type": "string" },
           "minItems": 1
         },
