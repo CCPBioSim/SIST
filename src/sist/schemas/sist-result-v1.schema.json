@@ -208,6 +208,11 @@
       "type": "array",
       "items": { "$ref": "#/$defs/probability" }
     },
+    "position_free_energies": {
+      "description": "One free energy per base pair, in kcal/mol. Entry k is position k + 1, and the length equals input.sequence_length_bp. Null where no counted state includes the position (P(x) = 0), because G(x) is undefined there.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/nullable_number" }
+    },
     "calculation": {
       "description": "What was calculated.",
       "type": "object",
@@ -300,12 +305,8 @@
       "description": "A number for each transition in the calculation, keyed by transition name.",
       "type": "object",
       "minProperties": 1,
-      "additionalProperties": false,
-      "properties": {
-        "melting": { "type": "number" },
-        "z_dna": { "type": "number" },
-        "cruciform": { "type": "number" }
-      }
+      "propertyNames": { "$ref": "#/$defs/transition" },
+      "additionalProperties": { "type": "number" }
     },
     "derived_parameters": {
       "description": "Model values worked out from the inputs.",
@@ -442,34 +443,13 @@
       }
     },
     "pair_matrix": {
-      "description": "Values for pairs of different transitions, read as matrix[a][b]. A transition paired with itself is not included.",
+      "description": "Values for pairs of different transitions, read as matrix[a][b]. A transition paired with itself is not included; the schema cannot check this, so sist.schema.validate does.",
       "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "melting": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "z_dna": { "$ref": "#/$defs/nullable_probability" },
-            "cruciform": { "$ref": "#/$defs/nullable_probability" }
-          }
-        },
-        "z_dna": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "melting": { "$ref": "#/$defs/nullable_probability" },
-            "cruciform": { "$ref": "#/$defs/nullable_probability" }
-          }
-        },
-        "cruciform": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "melting": { "$ref": "#/$defs/nullable_probability" },
-            "z_dna": { "$ref": "#/$defs/nullable_probability" }
-          }
-        }
+      "propertyNames": { "$ref": "#/$defs/transition" },
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": { "$ref": "#/$defs/transition" },
+        "additionalProperties": { "$ref": "#/$defs/nullable_probability" }
       }
     },
     "pairwise": {
@@ -529,12 +509,8 @@
           "description": "Ensemble averages for each transition in the calculation.",
           "type": "object",
           "minProperties": 1,
-          "additionalProperties": false,
-          "properties": {
-            "melting": { "$ref": "#/$defs/transition_summary" },
-            "z_dna": { "$ref": "#/$defs/transition_summary" },
-            "cruciform": { "$ref": "#/$defs/transition_summary" }
-          }
+          "propertyNames": { "$ref": "#/$defs/transition" },
+          "additionalProperties": { "$ref": "#/$defs/transition_summary" }
         },
         "pairwise": {
           "description": "Probabilities for pairs of transitions. Competition (A) only.",
@@ -557,24 +533,15 @@
           "description": "Probability that each base pair is in each transition, one array per transition.",
           "type": "object",
           "minProperties": 1,
-          "additionalProperties": false,
-          "properties": {
-            "melting": { "$ref": "#/$defs/position_probabilities" },
-            "z_dna": { "$ref": "#/$defs/position_probabilities" },
-            "cruciform": { "$ref": "#/$defs/position_probabilities" }
-          }
+          "propertyNames": { "$ref": "#/$defs/transition" },
+          "additionalProperties": { "$ref": "#/$defs/position_probabilities" }
         },
         "free_energy_kcal_per_mol": {
-          "description": "Per-position free energy G(x), in kcal/mol. Melting (M) only.",
+          "description": "Per-position free energy G(x), in kcal/mol, one array per transition. Only present for transitions where the calculation produces it, which today is melting in melting (M) runs. Melting G(x) is shifted so its largest value is 12 kcal/mol.",
           "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "melting": {
-              "description": "G(x) for melting. Shifted so the largest value is 12 kcal/mol. Null where no counted state melts the position (P(x) = 0).",
-              "type": "array",
-              "items": { "$ref": "#/$defs/nullable_number" }
-            }
-          }
+          "minProperties": 1,
+          "propertyNames": { "$ref": "#/$defs/transition" },
+          "additionalProperties": { "$ref": "#/$defs/position_free_energies" }
         }
       }
     },
