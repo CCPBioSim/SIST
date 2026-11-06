@@ -1,0 +1,62 @@
+{
+  "$schema": "https://raw.githubusercontent.com/CCPBioSim/SIST/main/src/sist/schemas/sist-result-v1.schema.json",
+  "schema_version": "1.0.0",
+  "status": "failed",
+  "provenance": {
+    "software": {
+      "name": "SIST",
+      "version": "1.1.0",
+      "git_sha": "5c5a7629fd1dcfb60a28ead8138dc5a2cf029366",
+      "engine": "trans_three",
+      "irf_version": null
+    },
+    "environment": {
+      "python": "3.13.13",
+      "platform": "Linux-7.0.0-1017-oem-x86_64-with-glibc2.43"
+    },
+    "command": ["sist", "-a", "M", "-f", "pbr322.toy.fa", "-s", "0.3", "-o", "melting-failed-underflow.json"],
+    "started_at": "2026-11-06T10:06:00Z",
+    "finished_at": "2026-11-06T10:06:00Z",
+    "wall_time_s": 0.4
+  },
+  "calculation": {
+    "algorithm": "M",
+    "transitions": ["melting"]
+  },
+  "input": {
+    "sequence_file": "pbr322.toy.fa",
+    "sequence_name": null,
+    "sequence_length_bp": 4361,
+    "sequence_sha256": "c8e1e7205eabb7d8f8252397d831e779eca676d4e7faf81cbdd9738497adc5c6",
+    "molecule_type": "linear"
+  },
+  "parameters": {
+    "temperature_k": 310.0,
+    "superhelical_density": -0.3,
+    "salt_concentration_m": 0.01,
+    "energy_threshold_kcal_per_mol": 12.0,
+    "melting_energetics": "copolymeric"
+  },
+  "derived_parameters": {
+    "linking_difference_turns": -127.24038461538461,
+    "torsional_stiffness_kcal_bp_per_rad2": 3.6,
+    "nucleation_energy_kcal_per_mol": {
+      "melting": 10.84
+    },
+    "bat_kcal_per_mol": 0.2581156634002174,
+    "bgc_kcal_per_mol": 1.3048755414539936
+  },
+  "summary": null,
+  "profile": null,
+  "warnings": [],
+  "error": {
+    "code": "partition_function_underflow",
+    "stage": "qsidd",
+    "message": "The partition function underflowed to zero, so qsidd could not work out any probabilities. Try a lower superhelical density or a shorter sequence.",
+    "exit_code": 0,
+    "stderr": null,
+    "details": {
+      "min_energy_kcal_per_mol": 1239.0152081215717
+    }
+  }
+}
