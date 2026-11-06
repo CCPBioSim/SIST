@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from typing import Any
 
 import pytest
@@ -137,3 +138,178 @@ def test_validation_issue_formats_the_top_level() -> None:
     issue = ValidationIssue("", "'status' is a required property")
 
     assert str(issue) == "(top level): 'status' is a required property"
+
+
+def test_algorithm_transitions_match_the_schema_algorithms() -> None:
+    schema = ResultValidator.load_schema()
+
+    algorithms = schema["$defs"]["calculation"]["properties"]["algorithm"]["enum"]
+
+    assert set(algorithms) == set(ResultValidator.ALGORITHM_TRANSITIONS)
+
+
+def test_algorithm_transitions_match_the_schema_transitions() -> None:
+    schema = ResultValidator.load_schema()
+    transitions = {
+        transition
+        for algorithm_transitions in ResultValidator.ALGORITHM_TRANSITIONS.values()
+        for transition in algorithm_transitions
+    }
+
+    assert transitions == set(schema["$defs"]["transition"]["enum"])
+
+
+def test_validate_rejects_transitions_that_do_not_match_the_algorithm(
+    validator: ResultValidator, melting_result: dict[str, Any]
+) -> None:
+    melting_result["calculation"]["algorithm"] = "Z"
+
+    issues = validator.validate(melting_result)
+
+    assert [issue.path for issue in issues] == ["calculation/transitions"]
+    assert "algorithm Z calculates ['z_dna']" in issues[0].message
+
+
+def test_validate_rejects_an_extra_transition(
+    validator: ResultValidator, melting_result: dict[str, Any]
+) -> None:
+    probability = melting_result["profile"]["probability"]
+    probability["z_dna"] = probability["melting"]
+
+    issues = validator.validate(melting_result)
+
+    assert [issue.path for issue in issues] == ["profile/probability"]
+    assert "not in calculation.transitions: ['z_dna']" in issues[0].message
+
+
+def test_validate_rejects_a_missing_transition(
+    validator: ResultValidator, competition_result: dict[str, Any]
+) -> None:
+    del competition_result["summary"]["transitions"]["cruciform"]
+
+    issues = validator.validate(competition_result)
+
+    assert [issue.path for issue in issues] == ["summary/transitions"]
+    assert "missing transitions: ['cruciform']" in issues[0].message
+
+
+def test_validate_accepts_free_energy_for_some_transitions(
+    validator: ResultValidator, competition_result: dict[str, Any]
+) -> None:
+    competition_result["profile"]["free_energy_kcal_per_mol"] = {
+        "z_dna": [1.0, 2.0, None, 3.0, 4.0]
+    }
+
+    issues = validator.validate(competition_result)
+
+    assert issues == []
+
+
+def test_validate_rejects_a_transition_paired_with_itself(
+    validator: ResultValidator, competition_result: dict[str, Any]
+) -> None:
+    joint_probability = competition_result["summary"]["pairwise"]["joint_probability"]
+    joint_probability["melting"] = {**joint_probability["melting"], "melting": 0.1}
+
+    issues = validator.validate(competition_result)
+
+    assert [issue.path for issue in issues] == [
+        "summary/pairwise/joint_probability/melting/melting"
+    ]
+
+
+def test_validate_rejects_pairwise_with_one_transition(
+    validator: ResultValidator,
+    melting_result: dict[str, Any],
+    competition_result: dict[str, Any],
+) -> None:
+    melting_result["summary"]["pairwise"] = copy.deepcopy(
+        competition_result["summary"]["pairwise"]
+    )
+
+    issues = validator.validate(melting_result)
+
+    assert [issue.path for issue in issues] == ["summary/pairwise"]
+
+
+def test_validate_rejects_a_profile_array_of_the_wrong_length(
+    validator: ResultValidator, melting_result: dict[str, Any]
+) -> None:
+    melting_result["profile"]["probability"]["melting"].pop()
+
+    issues = validator.validate(melting_result)
+
+    assert [issue.path for issue in issues] == ["profile/probability/melting"]
+    assert "has 4 entries, expected 5" in issues[0].message
+
+
+def test_validate_rejects_a_base_string_of_the_wrong_length(
+    validator: ResultValidator, melting_result: dict[str, Any]
+) -> None:
+    melting_result["profile"]["base"] += "A"
+
+    issues = validator.validate(melting_result)
+
+    assert [issue.path for issue in issues] == ["profile/base"]
+
+
+def test_validate_rejects_state_counts_that_do_not_add_up(
+    validator: ResultValidator, melting_result: dict[str, Any]
+) -> None:
+    """A count that lost digits is still a whole number, so only the total shows it."""
+    melting_result["summary"]["state_counts"]["by_number_of_runs"][1] = 4908540
+
+    issues = validator.validate(melting_result)
+
+    assert [issue.path for issue in issues] == ["summary/state_counts"]
+
+
+def test_validate_rejects_a_mismatched_ln_partition_function(
+    validator: ResultValidator, melting_result: dict[str, Any]
+) -> None:
+    melting_result["summary"]["ln_partition_function"] += 1.0
+
+    issues = validator.validate(melting_result)
+
+    assert [issue.path for issue in issues] == ["summary/ln_partition_function"]
+
+
+def test_validate_rejects_a_zero_partition_function(
+    validator: ResultValidator, melting_result: dict[str, Any]
+) -> None:
+    melting_result["summary"]["partition_function"] = 0.0
+
+    issues = validator.validate(melting_result)
+
+    assert [issue.path for issue in issues] == ["summary/partition_function"]
+    assert "use null" in issues[0].message
+
+
+def test_validate_accepts_a_null_partition_function(
+    validator: ResultValidator, melting_result: dict[str, Any]
+) -> None:
+    melting_result["summary"]["partition_function"] = None
+
+    issues = validator.validate(melting_result)
+
+    assert issues == []
+
+
+def test_validate_rejects_a_timestamp_that_is_not_a_date(
+    validator: ResultValidator, melting_result: dict[str, Any]
+) -> None:
+    melting_result["provenance"]["started_at"] = "yesterday"
+
+    issues = validator.validate(melting_result)
+
+    assert [issue.path for issue in issues] == ["provenance/started_at"]
+
+
+def test_validate_checks_transitions_in_a_failed_run(
+    validator: ResultValidator, failed_result: dict[str, Any]
+) -> None:
+    failed_result["calculation"]["transitions"] = ["melting"]
+
+    issues = validator.validate(failed_result)
+
+    assert [issue.path for issue in issues] == ["calculation/transitions"]
