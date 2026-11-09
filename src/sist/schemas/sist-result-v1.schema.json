@@ -1,0 +1,625 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/CCPBioSim/SIST/main/src/sist/schemas/sist-result-v1.schema.json",
+  "title": "SIST result",
+  "description": "Structured result of one SIST calculation, version 1. Sequence positions are 1-based. Energies are in kcal/mol. Missing values are null; NaN and Infinity are never written.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "status",
+    "provenance",
+    "calculation",
+    "input",
+    "parameters",
+    "derived_parameters",
+    "summary",
+    "profile",
+    "warnings",
+    "error"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "description": "Optional link to this schema, so editors can check the file while it is edited.",
+      "type": "string"
+    },
+    "schema_version": {
+      "description": "Version of the result model, as MAJOR.MINOR.PATCH. This schema accepts any 1.x.y.",
+      "type": "string",
+      "pattern": "^1\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "status": {
+      "description": "'success' if the run finished and results are present. 'failed' if it stopped early, in which case error says why.",
+      "enum": ["success", "failed"]
+    },
+    "provenance": {
+      "description": "How, where and when the result was made. Changes between runs, so regression comparisons should leave it out.",
+      "$ref": "#/$defs/provenance"
+    },
+    "calculation": {
+      "description": "What was calculated.",
+      "$ref": "#/$defs/calculation"
+    },
+    "input": {
+      "description": "The sequence that was analysed.",
+      "$ref": "#/$defs/input"
+    },
+    "parameters": {
+      "description": "Calculation parameters, as used by the calculation.",
+      "$ref": "#/$defs/parameters"
+    },
+    "derived_parameters": {
+      "description": "Model values worked out from the inputs. Null only if the run failed before they were set.",
+      "oneOf": [{ "$ref": "#/$defs/derived_parameters" }, { "type": "null" }]
+    },
+    "summary": {
+      "description": "Whole-molecule results. Null if the run failed.",
+      "oneOf": [{ "$ref": "#/$defs/summary" }, { "type": "null" }]
+    },
+    "profile": {
+      "description": "Per-position results. Null if the run failed.",
+      "oneOf": [{ "$ref": "#/$defs/profile" }, { "type": "null" }]
+    },
+    "inverted_repeats": {
+      "description": "Candidate cruciform regions scored by the IR finder. Algorithms C and A only.",
+      "oneOf": [
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/inverted_repeat" }
+        },
+        { "type": "null" }
+      ]
+    },
+    "diagnostics": {
+      "description": "Values for checking a run. Not covered by the versioning rules, so they may change in any release.",
+      "oneOf": [{ "$ref": "#/$defs/diagnostics" }, { "type": "null" }]
+    },
+    "warnings": {
+      "description": "Warnings raised during the run, in the order they were raised. Empty if there are none.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/warning" }
+    },
+    "error": {
+      "description": "Why the run failed. Null if it succeeded.",
+      "oneOf": [{ "$ref": "#/$defs/error" }, { "type": "null" }]
+    }
+  },
+  "allOf": [
+    {
+      "description": "A successful run has results and no error.",
+      "if": {
+        "properties": {
+          "status": { "const": "success" }
+        }
+      },
+      "then": {
+        "properties": {
+          "derived_parameters": { "type": "object" },
+          "summary": { "type": "object" },
+          "profile": { "type": "object" },
+          "error": { "type": "null" }
+        }
+      }
+    },
+    {
+      "description": "A failed run has an error and no results.",
+      "if": {
+        "properties": {
+          "status": { "const": "failed" }
+        }
+      },
+      "then": {
+        "properties": {
+          "summary": { "type": "null" },
+          "profile": { "type": "null" },
+          "error": { "type": "object" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "transition": {
+      "description": "Name of a structural transition.",
+      "enum": ["melting", "z_dna", "cruciform"]
+    },
+    "code": {
+      "description": "Machine-readable code: lowercase letters, digits and underscores. Match on this, not on the message.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "timestamp": {
+      "description": "UTC date and time in RFC 3339 format, for example 2026-11-04T14:30:00Z. Null if not known.",
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "positive_number": {
+      "description": "A number greater than 0.",
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "probability": {
+      "description": "A probability, from 0 to 1.",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "nullable_probability": {
+      "description": "A probability, or null if it is undefined.",
+      "oneOf": [{ "$ref": "#/$defs/probability" }, { "type": "null" }]
+    },
+    "nullable_number": {
+      "description": "A number, or null if it is undefined or does not apply.",
+      "type": ["number", "null"]
+    },
+    "position_probabilities": {
+      "description": "One probability per base pair. Entry k is position k + 1, and the length equals input.sequence_length_bp.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/probability" }
+    },
+    "position_free_energies": {
+      "description": "One free energy per base pair, in kcal/mol. Entry k is position k + 1, and the length equals input.sequence_length_bp. Null where no counted state includes the position (P(x) = 0), because G(x) is undefined there.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/nullable_number" }
+    },
+    "calculation": {
+      "description": "What was calculated.",
+      "type": "object",
+      "required": ["algorithm", "transitions"],
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {
+          "description": "Algorithm flag given to sist: M (melting), Z (Z-DNA), C (cruciform) or A (competition of all three).",
+          "enum": ["M", "Z", "C", "A"]
+        },
+        "transitions": {
+          "description": "Transitions included in the calculation, set by the algorithm. The results contain exactly these transitions; the schema cannot check this, so sist.schema.validate does.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/transition" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "input": {
+      "description": "The sequence that was analysed.",
+      "type": "object",
+      "required": ["sequence_file", "sequence_length_bp", "molecule_type"],
+      "additionalProperties": false,
+      "properties": {
+        "sequence_file": {
+          "description": "Sequence file path, as given. Null if the sequence was passed in directly rather than read from a file, for example when SIST is used from Python.",
+          "type": ["string", "null"]
+        },
+        "sequence_name": {
+          "description": "FASTA header without the leading '>'. Null if the file has no header.",
+          "type": ["string", "null"]
+        },
+        "sequence_length_bp": {
+          "description": "Number of base pairs analysed.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "sequence_sha256": {
+          "description": "SHA-256 of the analysed sequence, written as uppercase A, C, G and T with N replaced by G. Use it to check whether two results came from the same sequence.",
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "molecule_type": {
+          "description": "Molecule topology.",
+          "enum": ["linear", "circular"]
+        }
+      }
+    },
+    "parameters": {
+      "description": "Calculation parameters, as used by the calculation.",
+      "type": "object",
+      "required": [
+        "temperature_k",
+        "superhelical_density",
+        "salt_concentration_m",
+        "energy_threshold_kcal_per_mol",
+        "melting_energetics"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "temperature_k": {
+          "description": "Temperature in kelvin.",
+          "$ref": "#/$defs/positive_number"
+        },
+        "superhelical_density": {
+          "description": "Superhelical density (sigma) used by the calculation, dimensionless. Today SIST only models negative supercoiling, so a positive value given on the command line is used as its negative and this value is never above 0.",
+          "type": "number"
+        },
+        "salt_concentration_m": {
+          "description": "Salt concentration (ionic strength) in mol/L, used by qsidd.",
+          "$ref": "#/$defs/positive_number"
+        },
+        "energy_threshold_kcal_per_mol": {
+          "description": "Energy window above the lowest-energy state, in kcal/mol. Only states inside it are counted.",
+          "$ref": "#/$defs/positive_number"
+        },
+        "melting_energetics": {
+          "description": "Melting energetics. Null if melting is not part of the calculation.",
+          "enum": ["copolymeric", "nearest_neighbor", null]
+        },
+        "cruciform_salt_concentration_m": {
+          "description": "Salt concentration in mol/L used by the IR finder to score inverted repeats. Always 0.01, whatever salt_concentration_m is. Algorithms C and A only.",
+          "oneOf": [{ "$ref": "#/$defs/positive_number" }, { "type": "null" }]
+        }
+      }
+    },
+    "per_transition_number": {
+      "description": "A number for each transition in the calculation, keyed by transition name.",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/transition" },
+      "additionalProperties": { "type": "number" }
+    },
+    "derived_parameters": {
+      "description": "Model values worked out from the inputs.",
+      "type": "object",
+      "required": [
+        "linking_difference_turns",
+        "torsional_stiffness_kcal_bp_per_rad2",
+        "nucleation_energy_kcal_per_mol",
+        "bat_kcal_per_mol",
+        "bgc_kcal_per_mol"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "linking_difference_turns": {
+          "description": "Imposed linking difference in turns: sigma times the sequence length, divided by 10.4.",
+          "type": "number"
+        },
+        "torsional_stiffness_kcal_bp_per_rad2": {
+          "description": "Torsional stiffness in kcal bp / rad^2. Printed as K or C in the text output.",
+          "$ref": "#/$defs/positive_number"
+        },
+        "nucleation_energy_kcal_per_mol": {
+          "description": "Nucleation (initiation) energy for each transition, in kcal/mol.",
+          "$ref": "#/$defs/per_transition_number"
+        },
+        "bat_kcal_per_mol": {
+          "description": "Copolymeric melting free energy of an A-T pair, in kcal/mol. Used for copolymeric melting and for the cruciform nucleation energy. Null for Z-DNA runs, where it is not used.",
+          "$ref": "#/$defs/nullable_number"
+        },
+        "bgc_kcal_per_mol": {
+          "description": "Copolymeric melting free energy of a G-C pair, in kcal/mol. Used for copolymeric melting. Null for Z-DNA runs, where it is not used.",
+          "$ref": "#/$defs/nullable_number"
+        }
+      }
+    },
+    "inverted_repeat": {
+      "description": "One candidate cruciform region, covering positions start to start + length_bp - 1. For circular molecules it can wrap past the end.",
+      "type": "object",
+      "required": ["start", "length_bp", "energy_kcal_per_mol"],
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "description": "1-based first position of the region (arms and loop).",
+          "type": "integer",
+          "minimum": 1
+        },
+        "length_bp": {
+          "description": "Length of the region in base pairs: both arms plus the loop.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "energy_kcal_per_mol": {
+          "description": "Free energy to extrude this cruciform, in kcal/mol. Does not include the superhelical energy.",
+          "type": "number"
+        }
+      }
+    },
+    "diagnostics": {
+      "description": "Values for checking a run. Extra keys are allowed.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "scaling_factor": {
+          "description": "Offset qsidd adds to every Boltzmann exponent to avoid underflow. Already removed from public values.",
+          "type": "number"
+        },
+        "energy_window": {
+          "description": "Energy window used by the state search.",
+          "type": "object",
+          "required": ["min_energy_kcal_per_mol", "max_energy_kcal_per_mol"],
+          "additionalProperties": false,
+          "properties": {
+            "min_energy_kcal_per_mol": {
+              "description": "Lowest state energy found (MinE), in kcal/mol.",
+              "type": "number"
+            },
+            "max_energy_kcal_per_mol": {
+              "description": "Highest state energy counted (Max_E): the minimum plus the threshold, in kcal/mol.",
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "state_counts": {
+      "description": "Number of states counted inside the energy window, by number of runs. The zero-run state (nothing transformed) is not included.",
+      "type": "object",
+      "required": ["by_number_of_runs", "total"],
+      "additionalProperties": false,
+      "properties": {
+        "by_number_of_runs": {
+          "description": "Entry k is the number of states with k + 1 runs, so the first entry counts one-run states. The length is the largest number of runs the search considers, which is 4 today.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 1
+        },
+        "total": {
+          "description": "All states counted: the sum of by_number_of_runs.",
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "transition_summary": {
+      "description": "Ensemble averages for one transition.",
+      "type": "object",
+      "required": ["probability", "expected_runs", "expected_transformed_bp"],
+      "additionalProperties": false,
+      "properties": {
+        "probability": {
+          "description": "Probability that at least one run of this transition is present.",
+          "$ref": "#/$defs/probability"
+        },
+        "expected_runs": {
+          "description": "Expected number of runs of this transition. Can be more than 1.",
+          "type": "number",
+          "minimum": 0
+        },
+        "expected_transformed_bp": {
+          "description": "Expected number of base pairs in this transition: the sum of its per-position probabilities.",
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "pair_matrix": {
+      "description": "Values for pairs of different transitions, read as matrix[a][b]. A transition paired with itself is not included; the schema cannot check this, so sist.schema.validate does.",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/transition" },
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": { "$ref": "#/$defs/transition" },
+        "additionalProperties": { "$ref": "#/$defs/nullable_probability" }
+      }
+    },
+    "pairwise": {
+      "description": "Probabilities for pairs of transitions. Only for calculations with more than one transition, which today means competition (A). A value is null if it is undefined.",
+      "type": "object",
+      "required": [
+        "joint_probability",
+        "conditional_probability",
+        "conditional_probability_given_absent"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "joint_probability": {
+          "description": "joint_probability[a][b] is P(a and b): the probability that both are present.",
+          "$ref": "#/$defs/pair_matrix"
+        },
+        "conditional_probability": {
+          "description": "conditional_probability[a][b] is P(a | b): the probability of a, given that b is present.",
+          "$ref": "#/$defs/pair_matrix"
+        },
+        "conditional_probability_given_absent": {
+          "description": "conditional_probability_given_absent[a][b] is P(a | not b): the probability of a, given that b is absent.",
+          "$ref": "#/$defs/pair_matrix"
+        }
+      }
+    },
+    "summary": {
+      "description": "Whole-molecule results.",
+      "type": "object",
+      "required": [
+        "ln_partition_function",
+        "partition_function",
+        "average_number_of_runs",
+        "state_counts",
+        "transitions"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "ln_partition_function": {
+          "description": "Natural log of the partition function, dimensionless. Always present, so prefer it to partition_function.",
+          "type": "number"
+        },
+        "partition_function": {
+          "description": "Partition function, dimensionless. Null if it is too small to store as a double.",
+          "$ref": "#/$defs/nullable_number"
+        },
+        "average_number_of_runs": {
+          "description": "Expected total number of runs, over all transitions.",
+          "type": "number",
+          "minimum": 0
+        },
+        "state_counts": {
+          "description": "Number of states counted, by number of runs.",
+          "$ref": "#/$defs/state_counts"
+        },
+        "transitions": {
+          "description": "Ensemble averages for each transition in the calculation.",
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "$ref": "#/$defs/transition" },
+          "additionalProperties": { "$ref": "#/$defs/transition_summary" }
+        },
+        "pairwise": {
+          "description": "Probabilities for pairs of transitions. Only for calculations with more than one transition.",
+          "$ref": "#/$defs/pairwise"
+        }
+      }
+    },
+    "profile": {
+      "description": "Per-position results. Every array has one entry per base pair.",
+      "type": "object",
+      "required": ["probability"],
+      "additionalProperties": false,
+      "properties": {
+        "base": {
+          "description": "Analysed sequence, one letter per position. N in the input is analysed as G, so appears here as G.",
+          "type": "string",
+          "pattern": "^[ACGT]*$"
+        },
+        "probability": {
+          "description": "Probability that each base pair is in each transition, one array per transition.",
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "$ref": "#/$defs/transition" },
+          "additionalProperties": { "$ref": "#/$defs/position_probabilities" }
+        },
+        "free_energy_kcal_per_mol": {
+          "description": "Per-position free energy G(x), in kcal/mol, one array per transition. Only present for transitions where the calculation produces it, which today is melting in melting (M) runs. Melting G(x) is shifted so its largest value is 12 kcal/mol.",
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "$ref": "#/$defs/transition" },
+          "additionalProperties": { "$ref": "#/$defs/position_free_energies" }
+        }
+      }
+    },
+    "provenance": {
+      "description": "How, where and when the result was made.",
+      "type": "object",
+      "required": [
+        "software",
+        "environment",
+        "command",
+        "started_at",
+        "finished_at",
+        "wall_time_s"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "software": {
+          "description": "Software that made the result.",
+          "type": "object",
+          "required": ["name", "version", "git_sha", "engine", "irf_version"],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "description": "Always SIST.",
+              "const": "SIST"
+            },
+            "version": {
+              "description": "SIST version that wrote the file.",
+              "type": "string",
+              "minLength": 1
+            },
+            "git_sha": {
+              "description": "Git commit of the SIST source. From the SIST_GIT_SHA environment variable, or from git when running from a checkout. Null for installed packages.",
+              "type": ["string", "null"],
+              "pattern": "^[0-9a-f]{7,40}$"
+            },
+            "engine": {
+              "description": "qsidd binary used: trans_three for M, Z and C, trans_compete for A. Null if the run failed before choosing one.",
+              "enum": ["trans_three", "trans_compete", null]
+            },
+            "irf_version": {
+              "description": "IRF version read from its report. Null for M and Z runs, or if it could not be read.",
+              "type": ["string", "null"]
+            }
+          }
+        },
+        "environment": {
+          "description": "Machine the calculation ran on.",
+          "type": "object",
+          "required": ["python", "platform"],
+          "additionalProperties": false,
+          "properties": {
+            "python": {
+              "description": "Python version, for example 3.13.13.",
+              "type": "string"
+            },
+            "platform": {
+              "description": "Operating system and architecture, from Python's platform.platform().",
+              "type": "string"
+            }
+          }
+        },
+        "command": {
+          "description": "Command line as given, one argument per entry, starting with the program name. Null if SIST was run from Python rather than the command line.",
+          "type": ["array", "null"],
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "started_at": {
+          "description": "When the run started.",
+          "$ref": "#/$defs/timestamp"
+        },
+        "finished_at": {
+          "description": "When the run finished.",
+          "$ref": "#/$defs/timestamp"
+        },
+        "wall_time_s": {
+          "description": "Elapsed time in seconds.",
+          "type": ["number", "null"],
+          "minimum": 0
+        }
+      }
+    },
+    "warning": {
+      "description": "Something worth knowing that did not stop the run.",
+      "type": "object",
+      "required": ["code", "message", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "description": "Stable code, such as threshold_too_low. Known codes are listed in the docs. New codes may appear in minor versions, so accept codes you do not know.",
+          "$ref": "#/$defs/code"
+        },
+        "message": {
+          "description": "Text for people. May change between versions, so match on code instead.",
+          "type": "string"
+        },
+        "source": {
+          "description": "Part of SIST that raised the warning.",
+          "enum": ["sist", "ir_finder", "qsidd"]
+        },
+        "details": {
+          "description": "Extra values about the warning, such as the value that triggered it.",
+          "type": "object"
+        }
+      }
+    },
+    "error": {
+      "description": "Why the run failed.",
+      "type": "object",
+      "required": ["code", "message", "stage"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "description": "Stable code, such as irf_not_found. Known codes are listed in the docs.",
+          "$ref": "#/$defs/code"
+        },
+        "message": {
+          "description": "Text for people. May change between versions, so match on code instead.",
+          "type": "string"
+        },
+        "stage": {
+          "description": "Step of the run that failed.",
+          "enum": ["validation", "input", "ir_finder", "qsidd", "output", "internal"]
+        },
+        "exit_code": {
+          "description": "Exit code of the failing external program, if any.",
+          "type": ["integer", "null"]
+        },
+        "stderr": {
+          "description": "Standard error of the failing external program, if any.",
+          "type": ["string", "null"]
+        },
+        "details": {
+          "description": "Extra values about the error.",
+          "type": "object"
+        }
+      }
+    }
+  }
+}
