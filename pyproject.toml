@@ -11,6 +11,7 @@ requires-python = ">=3.12,<3.15"
 dependencies = [
     "biopython>=1.87,<2.0",
     "beautifulsoup4>=4.12,<5.0",
+    "jsonschema>=4.23,<5.0",
 ]
 
 authors = [
@@ -92,5 +93,5 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 
 [[tool.mypy.overrides]]
-module = ["Bio.*", "bs4.*"]
+module = ["Bio.*", "bs4.*", "jsonschema.*"]
 ignore_missing_imports = true
