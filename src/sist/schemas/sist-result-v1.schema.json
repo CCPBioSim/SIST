@@ -172,7 +172,7 @@
           "enum": ["M", "Z", "C", "A"]
         },
         "transitions": {
-          "description": "Transitions included in the calculation, set by the algorithm. The results contain exactly these transitions; the schema cannot check this, so sist.schema.validate does.",
+          "description": "Transitions included in the calculation, set by the algorithm. The results contain exactly these transitions; the schema cannot check this, so sist.schema.ResultValidator does.",
           "type": "array",
           "items": { "$ref": "#/$defs/transition" },
           "minItems": 1,
@@ -383,7 +383,7 @@
       }
     },
     "pair_matrix": {
-      "description": "Values for pairs of different transitions, read as matrix[a][b]. A transition paired with itself is not included; the schema cannot check this, so sist.schema.validate does.",
+      "description": "Values for pairs of different transitions, read as matrix[a][b]. A transition paired with itself is not included; the schema cannot check this, so sist.schema.ResultValidator does.",
       "type": "object",
       "propertyNames": { "$ref": "#/$defs/transition" },
       "additionalProperties": {
