@@ -352,10 +352,19 @@ class ResultValidator:
             result: A successful result that has passed the schema.
 
         Returns:
-            A problem for each array, or the base string, of the wrong length.
+            A problem for each array, or the base string, of the wrong length,
+            or a single problem if the sequence length is missing.
         """
-        issues = []
         length = result["input"]["sequence_length_bp"]
+
+        if length is None:
+            return [
+                ValidationIssue(
+                    "input/sequence_length_bp", "must be set for a successful run"
+                )
+            ]
+
+        issues = []
         profile = result["profile"]
 
         if "base" in profile and len(profile["base"]) != length:

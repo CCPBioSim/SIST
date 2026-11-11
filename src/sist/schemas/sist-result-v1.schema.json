@@ -195,8 +195,8 @@
           "type": ["string", "null"]
         },
         "sequence_length_bp": {
-          "description": "Number of base pairs analysed.",
-          "type": "integer",
+          "description": "Number of base pairs analysed. Null if the run failed before the sequence could be read.",
+          "type": ["integer", "null"],
           "minimum": 1
         },
         "sequence_sha256": {
