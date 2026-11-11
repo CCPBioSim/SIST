@@ -60,6 +60,7 @@ SIDD_Base::SIDD_Base() {
   // MEEE: I ADDED THIS FOR CALCULATING NUUMBER OF RUNS ACCURATELY
   sum_1RB = sum_2RB = sum_3RB = 0.0;
   set_showbase(1);
+  precise = 0;
 }
 
 SIDD_Base::~SIDD_Base() {

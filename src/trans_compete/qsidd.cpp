@@ -12,6 +12,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "SIDD_4R.h"
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdlib.h>
@@ -67,6 +68,7 @@ options:\n\
 -b        display base in output \n\
 -p        print algorithm parameters\n\
 -r        print ensemble average results\n\
+-P        print values at full precision, with the log partition function\n\
 ";
 
 int main(int argc, char *argv[]) {
@@ -87,6 +89,7 @@ int main(int argc, char *argv[]) {
   int verbose = 0;
   int showpar = 0;
   int showres = 0;
+  int precise = 0;
   double salt_conc = 0.01;
   double temperature = 310.00;
   double stress_level = 0.06;
@@ -94,7 +97,7 @@ int main(int argc, char *argv[]) {
   int usefile = 0;
 
   // option processing
-  while ((c = getopt(argc, argv, "hcfnbsvpriTXte:")) != -1) {
+  while ((c = getopt(argc, argv, "hcfnbsvpPriTXte:")) != -1) {
     switch (c) {
     case 'c':
       mt = Circular;
@@ -119,6 +122,9 @@ int main(int argc, char *argv[]) {
       break;
     case 'r':
       showres = 1;
+      break;
+    case 'P':
+      precise = 1;
       break;
     case 'T':
       temperature = atof(argv[optind++]);
@@ -145,6 +151,9 @@ int main(int argc, char *argv[]) {
   // start time
   time_1 = time(NULL);
   sidd.set_showres(showres);
+  sidd.set_precise(precise);
+  if (precise)
+    cout << setprecision(17);
   sidd.set_salt_conc(salt_conc);
   sidd.set_stress_level(stress_level);
   sidd.set_temperature(temperature);
