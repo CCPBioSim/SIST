@@ -66,7 +66,7 @@ def test_success_warns_when_there_are_no_inverted_repeats() -> None:
 
 
 def test_success_replaces_the_qsidd_length_warning_with_its_own() -> None:
-    """qsidd checks the size of the file, so SIST checks the base pairs instead."""
+    """Only SIST's base pair length warning is recorded, not qsidd's."""
     builder = ResultBuilder(make_settings("M"))
     sequence = builder.read_sequence()
 

@@ -29,7 +29,7 @@ from sist.results.sequence import SequenceInput
 class ResultBuilder:
     """Build the result of one run.
 
-    Create one builder when the run starts, so its start time is recorded,
+    Create one builder when the run starts, which records its start time,
     then call :meth:`read_sequence` and either :meth:`success` or
     :meth:`failure`.
 
@@ -85,8 +85,7 @@ class ResultBuilder:
     ) -> Result:
         """Build the result of a run that finished.
 
-        qsidd's warnings are recorded before checking for underflow, so a run
-        that fails that check still keeps them.
+        Records qsidd's warnings, then checks for underflow.
 
         Args:
             output: The parsed qsidd output.
@@ -98,8 +97,7 @@ class ResultBuilder:
             The result.
 
         Raises:
-            ResultError: If the partition function underflowed, so qsidd's
-                values are meaningless even though it exited normally.
+            ResultError: If the partition function underflowed to zero.
         """
         self.warnings.extend(qsidd_warnings(output.warnings))
 
@@ -150,8 +148,8 @@ class ResultBuilder:
     ) -> Result:
         """Build the result of a run that failed.
 
-        Everything known before the failure is kept, so a partition function
-        underflow still records the derived parameters qsidd printed.
+        Keeps everything known before the failure, including any derived
+        parameters qsidd printed.
 
         Args:
             error: Why the run failed.

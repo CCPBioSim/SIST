@@ -42,7 +42,7 @@ def test_transitions_read_the_competition_layout(
 
 
 def test_free_energy_is_null_where_probability_is_zero() -> None:
-    """G(x) is undefined where no counted state includes the position."""
+    """G(x) is null at a position whose probability is 0."""
     lines = (QSIDD_PATH / "melting.txt").read_text(encoding="utf-8").splitlines()
     table_start = next(n for n, line in enumerate(lines) if line.startswith("Position"))
     position, base, _, free_energy = lines[table_start + 3].split("\t")
@@ -77,7 +77,7 @@ def test_summary_reads_exact_state_counts(melting_output: QsiddOutput) -> None:
 
 
 def test_pairwise_is_null_where_undefined() -> None:
-    """P(a given b) is undefined when b never happens, so it is null."""
+    """P(a given b) is null when b never happens."""
     reader = QsiddReader(ALGORITHMS["A"])
 
     summary = reader.summary(read_output("competition-no-inverted-repeats.txt"))
@@ -87,7 +87,7 @@ def test_pairwise_is_null_where_undefined() -> None:
 
 
 def test_given_absent_is_null_when_the_other_transition_is_certain() -> None:
-    """qsidd writes 0 for P(a given not b) when b is certain, which is undefined."""
+    """P(a given not b) is null when b is certain."""
     text = (QSIDD_PATH / "competition.txt").read_text(encoding="utf-8")
     certain = "\n".join(
         "Prob_C = 1" if line.startswith("Prob_C =") else line

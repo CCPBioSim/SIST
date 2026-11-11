@@ -1,8 +1,8 @@
 """Turn qsidd's output into result values, for any algorithm.
 
-qsidd prints the same values under different names depending on whether it ran
-one transition or a competition. The names come from :mod:`sist.transitions`,
-so one reader handles every algorithm without checking algorithm letters.
+qsidd prints each value under one name for a single transition and another for
+a competition. The reader looks the names up in :mod:`sist.transitions` for the
+algorithm it was given.
 """
 
 from __future__ import annotations
@@ -40,15 +40,14 @@ class QsiddReader:
     def underflowed(self, output: QsiddOutput) -> bool:
         """Check whether the partition function underflowed to zero.
 
-        qsidd still exits normally when this happens, but every probability it
-        prints is meaningless, and its log of the partition function is not a
-        finite number.
+        qsidd reports this by printing a log of the partition function that is
+        not a finite number.
 
         Args:
             output: The parsed qsidd output.
 
         Returns:
-            True if the run's values cannot be used.
+            True if the partition function underflowed.
         """
         return output.number("ln Partition Function") is None
 
@@ -128,8 +127,8 @@ class QsiddReader:
     ) -> TransitionResult:
         """Read the results for one transition.
 
-        G(x) is included when qsidd printed it, and is null where the
-        transition's probability is 0, because G(x) is undefined there.
+        G(x) is included when qsidd printed it, with null where the
+        transition's probability is 0.
 
         Args:
             output: The parsed qsidd output.
@@ -162,10 +161,8 @@ class QsiddReader:
     def _pairwise(self, output: QsiddOutput) -> PairMatrices:
         """Read the probabilities for pairs of transitions.
 
-        qsidd writes 0 for P(a given not b) when b is certain, which is
-        undefined rather than 0, so that case is written as null. Values qsidd
-        prints as ``nan``, such as P(a given b) when b never happens, are also
-        null.
+        P(a given not b) is null when b is certain. Any value qsidd prints as
+        ``nan`` is null.
 
         Args:
             output: The parsed qsidd output.

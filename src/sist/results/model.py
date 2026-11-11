@@ -1,8 +1,7 @@
 """The typed SIST result.
 
-Each section of a result is a small dataclass with a ``to_dict`` method. This
-is the one place that knows the shape of ``sist-result-v1.schema.json``, so the
-rest of the code works with typed values instead of nested dictionaries.
+Each section of a result is a small dataclass with a ``to_dict`` method that
+writes it in the shape of ``sist-result-v1.schema.json``.
 """
 
 from __future__ import annotations
@@ -54,8 +53,8 @@ class RunSettings:
     def parameters(self) -> dict[str, Any]:
         """Write the settings as the calculation used them.
 
-        qsidd always uses negative supercoiling, and the IR finder always scores
-        inverted repeats at a fixed salt, so those are recorded as used.
+        The superhelical density is written as negative, as qsidd uses it.
+        Runs that score inverted repeats also record the IR finder's fixed salt.
 
         Returns:
             The ``parameters`` section.
@@ -297,7 +296,7 @@ class InvertedRepeat:
         """Read the scored inverted repeats from the string passed to qsidd.
 
         The string is ``start,length,energy,|`` repeated, and starts with a
-        placeholder entry of length 0, which is left out.
+        placeholder entry of length 0, which is skipped.
 
         Args:
             ir_string: The string the IR finder built for ``qsidd -X``.

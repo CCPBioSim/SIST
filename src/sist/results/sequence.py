@@ -13,16 +13,14 @@ from sist.results.diagnostics import ErrorCode, ResultError
 class SequenceInput:
     """The sequence read from the input file, as qsidd will analyse it.
 
-    qsidd skips header lines, keeps A, C, G, T and N (in any case) and drops
-    every other character. This mirrors that, so the result can record what
-    was actually analysed.
+    Header lines are skipped, A, C, G, T and N are kept in any case, and every
+    other character is dropped, as qsidd does.
 
     Attributes:
         name: The FASTA header without the leading ``>``, or None if the file
             has no header.
         analysed: The bases qsidd analyses, in upper case.
-        dropped: Number of characters qsidd drops because they are not A, C,
-            G, T or N.
+        dropped: Number of characters dropped that are not A, C, G, T or N.
     """
 
     name: str | None

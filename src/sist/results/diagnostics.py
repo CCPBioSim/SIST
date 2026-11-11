@@ -1,7 +1,7 @@
 """Warning and error codes, and the checks that raise warnings.
 
-Every code a result can hold is listed here once, along with the part of SIST
-that raises it, so codes cannot drift between the code, the tests and the docs.
+Each warning code records the part of SIST that raises it, and each error code
+the stage of the run that fails.
 """
 
 from __future__ import annotations
@@ -93,8 +93,7 @@ QSIDD_WARNINGS: dict[str, WarningCode] = {
     ),
 }
 """qsidd's warning text and its code. qsidd's two sequence length warnings are
-left out, because it checks the size of the file rather than the number of base
-pairs, so :func:`check_sequence` raises those instead."""
+not included. :func:`check_sequence` raises the sequence length warnings."""
 
 MIN_SEQUENCE_LENGTH = 1500
 """Shortest recommended sequence, in base pairs."""

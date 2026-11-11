@@ -59,8 +59,8 @@ class ResultWriter:
     def to_json(data: dict[str, Any]) -> str:
         """Write a result dictionary as JSON.
 
-        Objects are indented, but arrays of plain values stay on one line, so a
-        per-position array is one line rather than one line per base pair.
+        Objects are indented, and arrays of plain values are written on one
+        line.
 
         Args:
             data: The result as a dictionary.

@@ -71,9 +71,9 @@ class ProvenanceRecorder:
     def git_sha(cls) -> str | None:
         """Find the git commit SIST is running from.
 
-        The environment variable wins if it is set. Otherwise the commit is read
-        with git, but only when SIST is running from a source checkout, so an
-        installed copy never reports an unrelated repository.
+        Uses the environment variable if it is set. Otherwise reads the commit
+        with git when SIST is running from a source checkout, and returns None
+        for an installed copy.
 
         Returns:
             The commit hash, or None if it cannot be found.

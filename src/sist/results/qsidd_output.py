@@ -10,9 +10,6 @@ from dataclasses import dataclass, field
 class QsiddOutput:
     """The text output of one qsidd run, split into its parts.
 
-    This knows only qsidd's text format, not what the values mean or where they
-    go in a result.
-
     Attributes:
         values: Every ``key = value`` line, with the value kept as text.
         warnings: The text of each ``WARNING:`` line, in order.
@@ -64,9 +61,8 @@ class QsiddOutput:
     def number(self, key: str) -> float | None:
         """Read a printed value as a number.
 
-        Values such as ``-25.4 turns`` keep only the number. qsidd prints
-        ``nan`` and ``inf`` when a calculation breaks down, and those come back
-        as None, because JSON cannot hold them.
+        Values such as ``-25.4 turns`` keep only the number. ``nan`` and
+        ``inf`` are returned as None.
 
         Args:
             key: Name of the value, as printed before the ``=``.
