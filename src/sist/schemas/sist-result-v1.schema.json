@@ -20,7 +20,7 @@
   "additionalProperties": false,
   "properties": {
     "$schema": {
-      "description": "Optional link to this schema, so editors can check the file while it is edited.",
+      "description": "Optional link to this schema, used by editors to check the file.",
       "type": "string"
     },
     "schema_version": {
@@ -33,7 +33,7 @@
       "enum": ["success", "failed"]
     },
     "provenance": {
-      "description": "How, where and when the result was made. Changes between runs, so regression comparisons should leave it out.",
+      "description": "How, where and when the result was made. Changes between runs.",
       "$ref": "#/$defs/provenance"
     },
     "calculation": {
@@ -71,7 +71,7 @@
       ]
     },
     "diagnostics": {
-      "description": "Values for checking a run. Not covered by the versioning rules, so they may change in any release.",
+      "description": "Values for checking a run. Not covered by the versioning rules, and may change in any release.",
       "oneOf": [{ "$ref": "#/$defs/diagnostics" }, { "type": "null" }]
     },
     "warnings": {
@@ -157,7 +157,7 @@
       "items": { "$ref": "#/$defs/probability" }
     },
     "position_free_energies": {
-      "description": "One free energy per base pair, in kcal/mol. Entry k is position k + 1, and the length equals input.sequence_length_bp. Null where no counted state includes the position (P(x) = 0), because G(x) is undefined there.",
+      "description": "One free energy per base pair, in kcal/mol. Entry k is position k + 1, and the length equals input.sequence_length_bp. Null where no counted state includes the position (P(x) = 0).",
       "type": "array",
       "items": { "$ref": "#/$defs/nullable_number" }
     },
@@ -172,7 +172,7 @@
           "enum": ["M", "Z", "C", "A"]
         },
         "transitions": {
-          "description": "Transitions included in the calculation, set by the algorithm. The results contain exactly these transitions; the schema cannot check this, so sist.schema.ResultValidator does.",
+          "description": "Transitions included in the calculation, set by the algorithm. The results contain exactly these transitions, which sist.schema.ResultValidator checks.",
           "type": "array",
           "items": { "$ref": "#/$defs/transition" },
           "minItems": 1,
@@ -200,7 +200,7 @@
           "minimum": 1
         },
         "analysed_sequence": {
-          "description": "Analysed sequence, one letter per position. N in the input is analysed as G, so appears here as G. Omitted if the run failed before the sequence was read.",
+          "description": "Analysed sequence, one letter per position. N in the input is analysed as G, and appears here as G. Omitted if the run failed before the sequence was read.",
           "type": "string",
           "pattern": "^[ACGT]*$"
         },
@@ -232,7 +232,7 @@
           "$ref": "#/$defs/positive_number"
         },
         "superhelical_density": {
-          "description": "Superhelical density (sigma) used by the calculation, dimensionless. Today SIST only models negative supercoiling, so a positive value given on the command line is used as its negative and this value is never above 0.",
+          "description": "Superhelical density (sigma) used by the calculation, dimensionless. SIST models negative supercoiling: a positive value given on the command line is used as its negative, and this value is never above 0.",
           "type": "number"
         },
         "salt_concentration_m": {
@@ -338,7 +338,7 @@
       "additionalProperties": false,
       "properties": {
         "by_number_of_runs": {
-          "description": "Entry k is the number of states with k + 1 runs, so the first entry counts one-run states. The length is the largest number of runs the search considers, which is 4 today.",
+          "description": "Entry k is the number of states with k + 1 runs; the first entry counts one-run states. The length is the largest number of runs the search considers, which is 4 today.",
           "type": "array",
           "items": {
             "type": "integer",
@@ -354,7 +354,7 @@
       }
     },
     "pair_matrix": {
-      "description": "Values for pairs of different transitions, read as matrix[a][b]. A transition paired with itself is not included; the schema cannot check this, so sist.schema.ResultValidator does.",
+      "description": "Values for pairs of different transitions, read as matrix[a][b]. A transition paired with itself is not included, which sist.schema.ResultValidator checks.",
       "type": "object",
       "propertyNames": { "$ref": "#/$defs/transition" },
       "additionalProperties": {
@@ -455,7 +455,7 @@
       "additionalProperties": false,
       "properties": {
         "ln_partition_function": {
-          "description": "Natural log of the partition function, dimensionless. Always present, so prefer it to partition_function.",
+          "description": "Natural log of the partition function, dimensionless. Always present, including when partition_function is null.",
           "type": "number"
         },
         "partition_function": {
@@ -564,11 +564,11 @@
       "additionalProperties": false,
       "properties": {
         "code": {
-          "description": "Stable code, such as threshold_too_low. Known codes are listed in the docs. New codes may appear in minor versions, so accept codes you do not know.",
+          "description": "Stable code, such as threshold_too_low. Known codes are listed in the docs. New codes may appear in minor versions.",
           "$ref": "#/$defs/code"
         },
         "message": {
-          "description": "Text for people. May change between versions, so match on code instead.",
+          "description": "Text for people. May change between versions.",
           "type": "string"
         },
         "source": {
@@ -592,7 +592,7 @@
           "$ref": "#/$defs/code"
         },
         "message": {
-          "description": "Text for people. May change between versions, so match on code instead.",
+          "description": "Text for people. May change between versions.",
           "type": "string"
         },
         "stage": {

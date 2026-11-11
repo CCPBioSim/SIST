@@ -1,10 +1,9 @@
 """Validate structured SIST results.
 
 A result is checked in two passes. The JSON schema checks its shape: types,
-ranges, required keys and allowed names. Then a set of cross-checks compare one
-part of the result with another, such as making sure every per-position array is
-as long as the sequence. JSON Schema cannot express those comparisons, so they
-are written in Python here.
+ranges, required keys and allowed names. The cross-checks then compare one part
+of the result with another, such as each per-position array against the
+sequence length.
 """
 
 from __future__ import annotations
@@ -99,9 +98,8 @@ class ResultValidator:
     def validate(self, result: dict[str, Any]) -> list[ValidationIssue]:
         """Find every problem in a result.
 
-        The cross-checks rely on the shape the schema guarantees, so they only
-        run once the schema passes. A result that fails the schema reports
-        just the schema problems.
+        The cross-checks run only when the schema passes. A result that fails
+        the schema reports only the schema problems.
 
         Args:
             result: A parsed SIST result.
@@ -119,10 +117,7 @@ class ResultValidator:
         return self._cross_check(result)
 
     def check(self, result: dict[str, Any]) -> None:
-        """Make sure a result is valid.
-
-        Use this instead of :meth:`validate` when a bad result should stop the
-        program.
+        """Raise an error listing every problem in a result.
 
         Args:
             result: A parsed SIST result.
@@ -137,12 +132,11 @@ class ResultValidator:
 
     @staticmethod
     def _schema_issue(error: ValidationError) -> ValidationIssue:
-        """Turn a schema error into an issue that names the real problem.
+        """Turn a schema error into an issue for its deepest underlying error.
 
-        Sections that can be null, such as ``transitions``, are written in the schema
-        as "one of these options". When such a section is wrong, the schema error
-        only says that no option matched. Following the error down to the
-        deepest point in the result nearly always reaches the actual bad value.
+        For a section with more than one allowed shape, such as ``transitions``
+        (results or null), this follows the error down to the deepest point in
+        the result.
 
         Args:
             error: An error from the JSON Schema validator.
@@ -158,10 +152,10 @@ class ResultValidator:
         return ValidationIssue(path, error.message)
 
     def _cross_check(self, result: dict[str, Any]) -> list[ValidationIssue]:
-        """Compare parts of a result that the schema cannot check against each other.
+        """Run the checks that compare one part of a result with another.
 
-        A failed run has no summary or transitions, so only the checks that apply
-        to every run are made for it.
+        A failed run gets the timestamp and transition checks. A successful run
+        gets every check.
 
         Args:
             result: A result that has passed the schema.
@@ -184,11 +178,7 @@ class ResultValidator:
 
     @staticmethod
     def _check_timestamps(result: dict[str, Any]) -> list[ValidationIssue]:
-        """Make sure the start and finish times are real dates.
-
-        The schema marks them as dates, but the jsonschema package skips that
-        check unless an optional extra is installed. Checking them here means
-        they are always checked.
+        """Check that the start and finish times are RFC 3339 date-times.
 
         Args:
             result: A result that has passed the schema.
@@ -219,11 +209,10 @@ class ResultValidator:
 
     @staticmethod
     def _check_transitions(result: dict[str, Any]) -> list[ValidationIssue]:
-        """Make sure the transitions match the algorithm and the results.
+        """Check the transitions against the algorithm and the results.
 
-        ``calculation.transitions`` is the single source of truth. It has to
-        match what the algorithm calculates, and ``transitions`` needs exactly
-        one entry for each of them.
+        ``calculation.transitions`` is compared with what the algorithm
+        calculates, and ``transitions`` with ``calculation.transitions``.
 
         Args:
             result: A result that has passed the schema.
@@ -271,12 +260,7 @@ class ResultValidator:
 
     @staticmethod
     def _check_pairwise(result: dict[str, Any]) -> list[ValidationIssue]:
-        """Make sure pairwise probabilities only pair different, known transitions.
-
-        The schema allows any transition name in either position, because it
-        cannot compare a key with the key above it. So it cannot stop a
-        transition being paired with itself, which would not be a valid
-        probability.
+        """Check that pairwise probabilities only pair different, known transitions.
 
         Args:
             result: A successful result that has passed the schema.
@@ -321,7 +305,7 @@ class ResultValidator:
 
     @staticmethod
     def _check_lengths(result: dict[str, Any]) -> list[ValidationIssue]:
-        """Make sure every per-position value has one entry per base pair.
+        """Check that every per-position value has one entry per base pair.
 
         Args:
             result: A successful result that has passed the schema.
@@ -364,13 +348,7 @@ class ResultValidator:
 
     @staticmethod
     def _check_state_counts(result: dict[str, Any]) -> list[ValidationIssue]:
-        """Make sure the state counts add up to the total.
-
-        This catches counts that have lost digits. qsidd prints large counts in
-        scientific notation, so 4908539 comes out as ``4.90854e+06``. That reads
-        back as 4908540, a whole number, so it passes the schema's integer check.
-        The total is always printed in full, so comparing against it shows the
-        difference.
+        """Check that the state counts add up to the total.
 
         Args:
             result: A successful result that has passed the schema.
@@ -394,10 +372,7 @@ class ResultValidator:
 
     @classmethod
     def _check_partition_function(cls, result: dict[str, Any]) -> list[ValidationIssue]:
-        """Make sure the partition function matches its natural log.
-
-        A partition function too small to store should be written as null, not
-        0, so a value of 0 or below is a problem.
+        """Check that the partition function is above 0 and matches its natural log.
 
         Args:
             result: A successful result that has passed the schema.

@@ -241,7 +241,7 @@ def test_validate_rejects_an_analysed_sequence_of_the_wrong_length(
 def test_validate_rejects_state_counts_that_do_not_add_up(
     validator: ResultValidator, melting_result: dict[str, Any]
 ) -> None:
-    """A count that lost digits is still a whole number, so only the total shows it."""
+    """A count that has lost digits no longer adds up to the total."""
     melting_result["summary"]["state_counts"]["by_number_of_runs"][1] = 4908540
 
     issues = validator.validate(melting_result)

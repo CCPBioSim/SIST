@@ -1,9 +1,7 @@
 """The structural transitions and algorithms SIST can calculate.
 
-This is the one place that knows which transitions exist, which transitions
-each algorithm calculates, and what qsidd calls each value in its output.
-Everything else asks this module instead of checking algorithm letters, so a
-new transition or algorithm is added here and nowhere else in the Python code.
+Each transition records what qsidd calls its values. Each algorithm records the
+transitions it calculates, and the qsidd binary and flags that run it.
 """
 
 from __future__ import annotations
