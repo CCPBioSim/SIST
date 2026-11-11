@@ -20,6 +20,8 @@ from typing import Any
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError
 
+from sist.transitions import ALGORITHMS
+
 
 @dataclass(frozen=True)
 class ValidationIssue:
@@ -63,35 +65,12 @@ class ResultValidator:
 
     Attributes:
         SCHEMA_FILE: File name of the schema inside ``sist/schemas``.
-        ALGORITHM_TRANSITIONS: Transitions calculated by each algorithm, in the
-            order SIST reports them.
-        COMPLETE_TRANSITION_SECTIONS: Sections that need an entry for every
-            transition in the calculation, given as the keys to reach them.
-        PARTIAL_TRANSITION_SECTIONS: Sections that may cover only some of the
-            transitions. G(x) is one, because qsidd only reports it for melting.
         LN_PARTITION_FUNCTION_RTOL: Relative tolerance when comparing
             ``ln_partition_function`` with the log of ``partition_function``.
         schema: The result schema, loaded from the package.
     """
 
     SCHEMA_FILE = "sist-result-v1.schema.json"
-
-    ALGORITHM_TRANSITIONS: dict[str, tuple[str, ...]] = {
-        "M": ("melting",),
-        "Z": ("z_dna",),
-        "C": ("cruciform",),
-        "A": ("melting", "z_dna", "cruciform"),
-    }
-
-    COMPLETE_TRANSITION_SECTIONS: tuple[tuple[str, ...], ...] = (
-        ("summary", "transitions"),
-        ("profile", "probability"),
-        ("derived_parameters", "nucleation_energy_kcal_per_mol"),
-    )
-
-    PARTIAL_TRANSITION_SECTIONS: tuple[tuple[str, ...], ...] = (
-        ("profile", "free_energy_kcal_per_mol"),
-    )
 
     LN_PARTITION_FUNCTION_RTOL = 1e-9
 
@@ -160,7 +139,7 @@ class ResultValidator:
     def _schema_issue(error: ValidationError) -> ValidationIssue:
         """Turn a schema error into an issue that names the real problem.
 
-        Sections that can be null, such as ``profile``, are written in the schema
+        Sections that can be null, such as ``transitions``, are written in the schema
         as "one of these options". When such a section is wrong, the schema error
         only says that no option matched. Following the error down to the
         deepest point in the result nearly always reaches the actual bad value.
@@ -181,8 +160,8 @@ class ResultValidator:
     def _cross_check(self, result: dict[str, Any]) -> list[ValidationIssue]:
         """Compare parts of a result that the schema cannot check against each other.
 
-        A failed run has no summary or profile, so only the checks that apply to
-        every run are made for it.
+        A failed run has no summary or transitions, so only the checks that apply
+        to every run are made for it.
 
         Args:
             result: A result that has passed the schema.
@@ -238,59 +217,55 @@ class ResultValidator:
 
         return issues
 
-    def _check_transitions(self, result: dict[str, Any]) -> list[ValidationIssue]:
-        """Make sure every section covers the transitions the calculation names.
+    @staticmethod
+    def _check_transitions(result: dict[str, Any]) -> list[ValidationIssue]:
+        """Make sure the transitions match the algorithm and the results.
 
         ``calculation.transitions`` is the single source of truth. It has to
-        match the algorithm, and every section keyed by transition has to match
-        it.
+        match what the algorithm calculates, and ``transitions`` needs exactly
+        one entry for each of them.
 
         Args:
             result: A result that has passed the schema.
 
         Returns:
-            A problem if the transitions do not match the algorithm, and one for
-            each section with extra or missing transitions.
+            A problem if the transitions do not match the algorithm, and one if
+            the results have extra or missing transitions.
         """
         issues = []
         calculation = result["calculation"]
         transitions = calculation["transitions"]
-        expected = self.ALGORITHM_TRANSITIONS.get(calculation["algorithm"])
+        algorithm = ALGORITHMS.get(calculation["algorithm"])
 
-        if expected is not None and tuple(transitions) != expected:
+        if algorithm is not None and tuple(transitions) != algorithm.transition_names:
             issues.append(
                 ValidationIssue(
                     "calculation/transitions",
-                    f"algorithm {calculation['algorithm']} calculates "
-                    f"{list(expected)}, not {transitions}",
+                    f"algorithm {algorithm.flag} calculates "
+                    f"{list(algorithm.transition_names)}, not {transitions}",
                 )
             )
 
-        sections = [(keys, True) for keys in self.COMPLETE_TRANSITION_SECTIONS]
-        sections += [(keys, False) for keys in self.PARTIAL_TRANSITION_SECTIONS]
-        wanted = set(transitions)
+        results = result["transitions"]
 
-        for keys, must_cover_all in sections:
-            section = self._get(result, *keys)
+        if results is None:
+            return issues
 
-            if section is None:
-                continue
+        extra = sorted(set(results) - set(transitions))
+        missing = sorted(set(transitions) - set(results))
 
-            path = "/".join(keys)
-            extra = sorted(set(section) - wanted)
-            missing = sorted(wanted - set(section))
-
-            if extra:
-                issues.append(
-                    ValidationIssue(
-                        path, f"has transitions not in calculation.transitions: {extra}"
-                    )
+        if extra:
+            issues.append(
+                ValidationIssue(
+                    "transitions",
+                    f"has transitions not in calculation.transitions: {extra}",
                 )
+            )
 
-            if must_cover_all and missing:
-                issues.append(
-                    ValidationIssue(path, f"is missing transitions: {missing}")
-                )
+        if missing:
+            issues.append(
+                ValidationIssue("transitions", f"is missing transitions: {missing}")
+            )
 
         return issues
 
@@ -352,8 +327,8 @@ class ResultValidator:
             result: A successful result that has passed the schema.
 
         Returns:
-            A problem for each array, or the base string, of the wrong length,
-            or a single problem if the sequence length is missing.
+            A problem for each array, or the analysed sequence, of the wrong
+            length, or a single problem if the sequence length is missing.
         """
         length = result["input"]["sequence_length_bp"]
 
@@ -365,22 +340,22 @@ class ResultValidator:
             ]
 
         issues = []
-        profile = result["profile"]
+        analysed_sequence = result["input"].get("analysed_sequence")
 
-        if "base" in profile and len(profile["base"]) != length:
+        if analysed_sequence is not None and len(analysed_sequence) != length:
             issues.append(
                 ValidationIssue(
-                    "profile/base",
-                    f"has {len(profile['base'])} letters, expected {length}",
+                    "input/analysed_sequence",
+                    f"has {len(analysed_sequence)} letters, expected {length}",
                 )
             )
 
-        for group in ("probability", "free_energy_kcal_per_mol"):
-            for transition, values in profile.get(group, {}).items():
+        for transition, transition_result in result["transitions"].items():
+            for name, values in transition_result["profile"].items():
                 if len(values) != length:
                     issues.append(
                         ValidationIssue(
-                            f"profile/{group}/{transition}",
+                            f"transitions/{transition}/profile/{name}",
                             f"has {len(values)} entries, expected {length}",
                         )
                     )
@@ -460,24 +435,3 @@ class ResultValidator:
                 f"does not match log(partition_function) = {expected}",
             )
         ]
-
-    @staticmethod
-    def _get(result: dict[str, Any], *keys: str) -> Any:
-        """Look up a value nested inside a result.
-
-        Args:
-            result: A parsed SIST result.
-            *keys: Keys to follow, outermost first.
-
-        Returns:
-            The value, or None if any key along the way is missing or null.
-        """
-        value: Any = result
-
-        for key in keys:
-            if not isinstance(value, dict):
-                return None
-
-            value = value.get(key)
-
-        return value

@@ -13,7 +13,7 @@
     "parameters",
     "derived_parameters",
     "summary",
-    "profile",
+    "transitions",
     "warnings",
     "error"
   ],
@@ -56,9 +56,9 @@
       "description": "Whole-molecule results. Null if the run failed.",
       "oneOf": [{ "$ref": "#/$defs/summary" }, { "type": "null" }]
     },
-    "profile": {
-      "description": "Per-position results. Null if the run failed.",
-      "oneOf": [{ "$ref": "#/$defs/profile" }, { "type": "null" }]
+    "transitions": {
+      "description": "Results for each transition in the calculation, keyed by transition. Null if the run failed.",
+      "oneOf": [{ "$ref": "#/$defs/transitions" }, { "type": "null" }]
     },
     "inverted_repeats": {
       "description": "Candidate cruciform regions scored by the IR finder. Algorithms C and A only.",
@@ -96,7 +96,7 @@
         "properties": {
           "derived_parameters": { "type": "object" },
           "summary": { "type": "object" },
-          "profile": { "type": "object" },
+          "transitions": { "type": "object" },
           "error": { "type": "null" }
         }
       }
@@ -111,7 +111,7 @@
       "then": {
         "properties": {
           "summary": { "type": "null" },
-          "profile": { "type": "null" },
+          "transitions": { "type": "null" },
           "error": { "type": "object" }
         }
       }
@@ -199,6 +199,11 @@
           "type": ["integer", "null"],
           "minimum": 1
         },
+        "analysed_sequence": {
+          "description": "Analysed sequence, one letter per position. N in the input is analysed as G, so appears here as G. Omitted if the run failed before the sequence was read.",
+          "type": "string",
+          "pattern": "^[ACGT]*$"
+        },
         "sequence_sha256": {
           "description": "SHA-256 of the analysed sequence, written as uppercase A, C, G and T with N replaced by G. Use it to check whether two results came from the same sequence.",
           "type": ["string", "null"],
@@ -248,20 +253,12 @@
         }
       }
     },
-    "per_transition_number": {
-      "description": "A number for each transition in the calculation, keyed by transition name.",
-      "type": "object",
-      "minProperties": 1,
-      "propertyNames": { "$ref": "#/$defs/transition" },
-      "additionalProperties": { "type": "number" }
-    },
     "derived_parameters": {
       "description": "Model values worked out from the inputs.",
       "type": "object",
       "required": [
         "linking_difference_turns",
         "torsional_stiffness_kcal_bp_per_rad2",
-        "nucleation_energy_kcal_per_mol",
         "bat_kcal_per_mol",
         "bgc_kcal_per_mol"
       ],
@@ -274,10 +271,6 @@
         "torsional_stiffness_kcal_bp_per_rad2": {
           "description": "Torsional stiffness in kcal bp / rad^2. Printed as K or C in the text output.",
           "$ref": "#/$defs/positive_number"
-        },
-        "nucleation_energy_kcal_per_mol": {
-          "description": "Nucleation (initiation) energy for each transition, in kcal/mol.",
-          "$ref": "#/$defs/per_transition_number"
         },
         "bat_kcal_per_mol": {
           "description": "Copolymeric melting free energy of an A-T pair, in kcal/mol. Used for copolymeric melting and for the cruciform nucleation energy. Null for Z-DNA runs, where it is not used.",
@@ -360,28 +353,6 @@
         }
       }
     },
-    "transition_summary": {
-      "description": "Ensemble averages for one transition.",
-      "type": "object",
-      "required": ["probability", "expected_runs", "expected_transformed_bp"],
-      "additionalProperties": false,
-      "properties": {
-        "probability": {
-          "description": "Probability that at least one run of this transition is present.",
-          "$ref": "#/$defs/probability"
-        },
-        "expected_runs": {
-          "description": "Expected number of runs of this transition. Can be more than 1.",
-          "type": "number",
-          "minimum": 0
-        },
-        "expected_transformed_bp": {
-          "description": "Expected number of base pairs in this transition: the sum of its per-position probabilities.",
-          "type": "number",
-          "minimum": 0
-        }
-      }
-    },
     "pair_matrix": {
       "description": "Values for pairs of different transitions, read as matrix[a][b]. A transition paired with itself is not included; the schema cannot check this, so sist.schema.ResultValidator does.",
       "type": "object",
@@ -416,6 +387,62 @@
         }
       }
     },
+    "transitions": {
+      "description": "Results for each transition in the calculation, keyed by transition name. The keys match calculation.transitions.",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/transition" },
+      "additionalProperties": { "$ref": "#/$defs/transition_result" }
+    },
+    "transition_result": {
+      "description": "Everything SIST reports about one transition.",
+      "type": "object",
+      "required": [
+        "nucleation_energy_kcal_per_mol",
+        "probability",
+        "expected_runs",
+        "expected_transformed_bp",
+        "profile"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "nucleation_energy_kcal_per_mol": {
+          "description": "Nucleation (initiation) energy, in kcal/mol.",
+          "type": "number"
+        },
+        "probability": {
+          "description": "Probability that at least one run of this transition is present.",
+          "$ref": "#/$defs/probability"
+        },
+        "expected_runs": {
+          "description": "Expected number of runs of this transition. Can be more than 1.",
+          "type": "number",
+          "minimum": 0
+        },
+        "expected_transformed_bp": {
+          "description": "Expected number of base pairs in this transition: the sum of its per-position probabilities.",
+          "type": "number",
+          "minimum": 0
+        },
+        "profile": { "$ref": "#/$defs/transition_profile" }
+      }
+    },
+    "transition_profile": {
+      "description": "Per-position results for one transition. Every array has one entry per base pair.",
+      "type": "object",
+      "required": ["probability"],
+      "additionalProperties": false,
+      "properties": {
+        "probability": {
+          "description": "Probability that each base pair is in this transition.",
+          "$ref": "#/$defs/position_probabilities"
+        },
+        "free_energy_kcal_per_mol": {
+          "description": "Per-position free energy G(x), in kcal/mol. Only present where qsidd reports it, which today is melting in melting (M) runs. It is shifted so its largest value is 12 kcal/mol.",
+          "$ref": "#/$defs/position_free_energies"
+        }
+      }
+    },
     "summary": {
       "description": "Whole-molecule results.",
       "type": "object",
@@ -423,8 +450,7 @@
         "ln_partition_function",
         "partition_function",
         "average_number_of_runs",
-        "state_counts",
-        "transitions"
+        "state_counts"
       ],
       "additionalProperties": false,
       "properties": {
@@ -445,43 +471,9 @@
           "description": "Number of states counted, by number of runs.",
           "$ref": "#/$defs/state_counts"
         },
-        "transitions": {
-          "description": "Ensemble averages for each transition in the calculation.",
-          "type": "object",
-          "minProperties": 1,
-          "propertyNames": { "$ref": "#/$defs/transition" },
-          "additionalProperties": { "$ref": "#/$defs/transition_summary" }
-        },
         "pairwise": {
           "description": "Probabilities for pairs of transitions. Only for calculations with more than one transition.",
           "$ref": "#/$defs/pairwise"
-        }
-      }
-    },
-    "profile": {
-      "description": "Per-position results. Every array has one entry per base pair.",
-      "type": "object",
-      "required": ["probability"],
-      "additionalProperties": false,
-      "properties": {
-        "base": {
-          "description": "Analysed sequence, one letter per position. N in the input is analysed as G, so appears here as G.",
-          "type": "string",
-          "pattern": "^[ACGT]*$"
-        },
-        "probability": {
-          "description": "Probability that each base pair is in each transition, one array per transition.",
-          "type": "object",
-          "minProperties": 1,
-          "propertyNames": { "$ref": "#/$defs/transition" },
-          "additionalProperties": { "$ref": "#/$defs/position_probabilities" }
-        },
-        "free_energy_kcal_per_mol": {
-          "description": "Per-position free energy G(x), in kcal/mol, one array per transition. Only present for transitions where the calculation produces it, which today is melting in melting (M) runs. Melting G(x) is shifted so its largest value is 12 kcal/mol.",
-          "type": "object",
-          "minProperties": 1,
-          "propertyNames": { "$ref": "#/$defs/transition" },
-          "additionalProperties": { "$ref": "#/$defs/position_free_energies" }
         }
       }
     },
