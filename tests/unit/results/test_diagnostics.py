@@ -14,19 +14,24 @@ from sist.results.diagnostics import (
     qsidd_warnings,
 )
 from sist.results.sequence import SequenceInput
+from sist.schema import ResultValidator
 from sist.transitions import ALGORITHMS
 
 
-def test_every_error_code_has_a_stage() -> None:
-    stages = {code.stage for code in ErrorCode}
+def test_error_stages_are_ones_the_schema_allows() -> None:
+    schema = ResultValidator.load_schema()
 
-    assert stages <= {"validation", "input", "ir_finder", "qsidd", "output", "internal"}
+    allowed = schema["$defs"]["error"]["properties"]["stage"]["enum"]
+
+    assert {code.stage for code in ErrorCode} <= set(allowed)
 
 
-def test_warning_sources() -> None:
-    assert WarningCode.THRESHOLD_TOO_LOW.source == "qsidd"
-    assert WarningCode.NO_INVERTED_REPEATS_FOUND.source == "ir_finder"
-    assert WarningCode.AMBIGUOUS_BASES_REPLACED.source == "sist"
+def test_warning_sources_are_ones_the_schema_allows() -> None:
+    schema = ResultValidator.load_schema()
+
+    allowed = schema["$defs"]["warning"]["properties"]["source"]["enum"]
+
+    assert {code.source for code in WarningCode} == set(allowed)
 
 
 def test_warning_to_dict_includes_the_source_and_details() -> None:

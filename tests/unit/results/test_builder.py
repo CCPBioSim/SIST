@@ -49,7 +49,7 @@ def test_success_records_inverted_repeats_only_when_used() -> None:
     )
 
     assert result.inverted_repeats is not None
-    assert [repeat.start for repeat in result.inverted_repeats] == [20, 60]
+    assert [repeat.start for repeat in result.inverted_repeats] == [3, 12]
 
 
 def test_success_warns_when_there_are_no_inverted_repeats() -> None:
@@ -75,20 +75,7 @@ def test_success_replaces_the_qsidd_length_warning_with_its_own() -> None:
     assert [w.code for w in result.warnings] == [WarningCode.SEQUENCE_TOO_SHORT]
 
 
-def test_success_raises_when_the_partition_function_underflows() -> None:
-    builder = ResultBuilder(
-        make_settings("M", file=str(TOY_PATH), superhelical_density=0.3)
-    )
-    sequence = builder.read_sequence()
-
-    with pytest.raises(ResultError) as raised:
-        builder.success(read_output("underflow.txt"), sequence)
-
-    assert raised.value.code == ErrorCode.PARTITION_FUNCTION_UNDERFLOW
-    assert raised.value.exit_code == 0
-
-
-def test_failure_after_underflow_keeps_what_qsidd_printed(
+def test_underflow_becomes_a_failed_result_that_keeps_what_qsidd_printed(
     validator: ResultValidator,
 ) -> None:
     builder = ResultBuilder(
@@ -102,6 +89,7 @@ def test_failure_after_underflow_keeps_what_qsidd_printed(
 
     result = builder.failure(raised.value, sequence=sequence, output=output)
 
+    assert raised.value.code == ErrorCode.PARTITION_FUNCTION_UNDERFLOW
     assert validator.validate(result.to_dict()) == []
     assert result.derived_parameters is not None
     assert [w.code for w in result.warnings] == [

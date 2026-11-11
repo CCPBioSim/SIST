@@ -1,7 +1,7 @@
 """Saved qsidd outputs and settings shared by the sist.results tests.
 
 The saved qsidd outputs in ``tests/unit/data/qsidd`` were made with ``-b -p -r
--P`` on ``fragment.fa``, the first 100 bp of the regression sequence. The
+-P`` on ``fragment.fa``, the first 20 bp of the regression sequence. The
 underflow output was made on the full regression sequence at a superhelical
 density of 0.3, with its table cut to 5 rows.
 """
@@ -42,7 +42,7 @@ def read_output(name: str) -> QsiddOutput:
 
 
 def make_settings(flag: str, **overrides: Any) -> RunSettings:
-    """Make settings for the 100 bp fragment the saved outputs were run on.
+    """Make settings for the 20 bp fragment the saved outputs were run on.
 
     Args:
         flag: Algorithm flag, such as ``"M"``.

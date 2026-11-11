@@ -28,7 +28,7 @@ def test_parse_reads_the_profile_table(competition_output: QsiddOutput) -> None:
         "P_Z",
         "P_cruciform",
     ]
-    assert len(competition_output.rows) == 100
+    assert len(competition_output.rows) == 20
 
 
 def test_number_drops_the_unit(melting_output: QsiddOutput) -> None:
@@ -43,7 +43,7 @@ def test_number_returns_none_for_nan_and_infinity() -> None:
 
 
 def test_count_reads_an_exact_integer(melting_output: QsiddOutput) -> None:
-    assert melting_output.count("Total number of states") == 734
+    assert melting_output.count("Total number of states") == 117
 
 
 def test_column_reads_one_column(melting_output: QsiddOutput) -> None:

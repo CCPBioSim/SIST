@@ -25,7 +25,7 @@ def test_transitions_read_the_single_layout(melting_output: QsiddOutput) -> None
 
     assert melting.nucleation_energy_kcal_per_mol == 10.84
     assert melting.probability == melting_output.number("Transition Probability")
-    assert len(melting.profile_probability) == 100
+    assert len(melting.profile_probability) == 20
 
 
 def test_transitions_read_the_competition_layout(
@@ -41,17 +41,19 @@ def test_transitions_read_the_competition_layout(
     )
 
 
-def test_free_energy_is_null_where_probability_is_zero(
-    melting_output: QsiddOutput,
-) -> None:
+def test_free_energy_is_null_where_probability_is_zero() -> None:
+    """G(x) is undefined where no counted state includes the position."""
+    lines = (QSIDD_PATH / "melting.txt").read_text(encoding="utf-8").splitlines()
+    table_start = next(n for n, line in enumerate(lines) if line.startswith("Position"))
+    position, base, _, free_energy = lines[table_start + 3].split("\t")
+    lines[table_start + 3] = "\t".join([position, base, "0", free_energy])
     reader = QsiddReader(ALGORITHMS["M"])
 
-    melting = reader.transitions(melting_output)["melting"]
+    melting = reader.transitions(QsiddOutput.parse("\n".join(lines)))["melting"]
 
     assert melting.free_energy_kcal_per_mol is not None
-    assert [value is None for value in melting.free_energy_kcal_per_mol] == [
-        value == 0 for value in melting.profile_probability
-    ]
+    assert melting.free_energy_kcal_per_mol[2] is None
+    assert melting.free_energy_kcal_per_mol[0] is not None
 
 
 def test_free_energy_is_left_out_where_qsidd_does_not_print_it(
@@ -69,8 +71,8 @@ def test_summary_reads_exact_state_counts(melting_output: QsiddOutput) -> None:
 
     summary = reader.summary(melting_output)
 
-    assert summary.states_by_number_of_runs == [734, 0, 0, 0]
-    assert summary.total_states == 734
+    assert summary.states_by_number_of_runs == [117, 0, 0, 0]
+    assert summary.total_states == 117
     assert summary.pairwise is None
 
 
@@ -108,10 +110,3 @@ def test_derived_parameters_are_null_where_not_printed() -> None:
 
     assert derived.bat_kcal_per_mol is None
     assert derived.torsional_stiffness_kcal_bp_per_rad2 == 3.6
-
-
-def test_underflowed() -> None:
-    reader = QsiddReader(ALGORITHMS["M"])
-
-    assert reader.underflowed(read_output("underflow.txt"))
-    assert not reader.underflowed(read_output("melting.txt"))

@@ -1,24 +1,24 @@
 DNA sequence file: fragment.fa
 WARNING: sequence length is too short
-Sequence Length = 100
+Sequence Length = 20
 Transition: Z-DNA
 Molecule type: linear DNA
 Stress Level = -0.059999999999999998
-linking difference = -0.86538461538461531 TURNS
+linking difference = -0.40384615384615385 TURNS
 Threshold = 12 kcal/mol
 Temperature = 310 K
 Salt Concentration = 0.01 M
 C = 3.6000000000000001 kcal-bp/rad^2
 Nucleation energy = 10 kcal/mol
-MinE = 3.4139199408284022 kcal/mol; Max_E = 15.413919940828402 kcal/mol
+MinE = 1.5931626390532545 kcal/mol; Max_E = 13.593162639053254 kcal/mol
 Number of one-run states = 0
 Number of two-run states = 0
 Number of three-run states = 0
 Number of four-run states = 0
 Total number of states = 0
-Total Partition Function = 0.0039195048739291754
+Total Partition Function = 0.075308020262856407
 Scaling factor 300
-ln Partition Function = -5.5417899408283802
+ln Partition Function = -2.5861686390532554
 Average number of runs = 0
 Transition Probability = 0
 Number of Z-DNA bases = 0
@@ -44,83 +44,3 @@ Position	Base	P(x)
 18	T	0
 19	T	0
 20	A	0
-21	T	0
-22	C	0
-23	A	0
-24	T	0
-25	C	0
-26	G	0
-27	A	0
-28	T	0
-29	A	0
-30	A	0
-31	G	0
-32	C	0
-33	T	0
-34	T	0
-35	T	0
-36	A	0
-37	A	0
-38	T	0
-39	G	0
-40	C	0
-41	G	0
-42	G	0
-43	T	0
-44	A	0
-45	G	0
-46	T	0
-47	T	0
-48	T	0
-49	A	0
-50	T	0
-51	C	0
-52	A	0
-53	C	0
-54	A	0
-55	G	0
-56	T	0
-57	T	0
-58	A	0
-59	A	0
-60	A	0
-61	T	0
-62	T	0
-63	G	0
-64	C	0
-65	T	0
-66	A	0
-67	A	0
-68	C	0
-69	G	0
-70	C	0
-71	A	0
-72	G	0
-73	T	0
-74	C	0
-75	A	0
-76	G	0
-77	G	0
-78	C	0
-79	A	0
-80	C	0
-81	C	0
-82	G	0
-83	T	0
-84	G	0
-85	T	0
-86	A	0
-87	T	0
-88	G	0
-89	A	0
-90	A	0
-91	A	0
-92	T	0
-93	C	0
-94	T	0
-95	A	0
-96	A	0
-97	C	0
-98	A	0
-99	A	0
-100	T	0
