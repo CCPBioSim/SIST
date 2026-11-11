@@ -12,7 +12,9 @@ import argparse
 from dataclasses import dataclass
 from typing import Any
 
-ALGORITHM_CHOICES = ("M", "Z", "C", "A")
+from sist.transitions import ALGORITHMS
+
+ALGORITHM_CHOICES = tuple(ALGORITHMS)
 
 
 @dataclass(frozen=True)
@@ -130,6 +132,16 @@ ARG_SPECS: tuple[ArgSpec, ...] = (
         type=str,
         default=None,
         help="Write output to this file instead of printing to stdout.",
+    ),
+    ArgSpec(
+        dest="json_file",
+        flags=("--json",),
+        type=str,
+        default=None,
+        help=(
+            "Write the result as structured JSON to this file. The text output "
+            "is then only written if -o is also given."
+        ),
     ),
 )
 
