@@ -162,8 +162,8 @@ class SistRunner:
     ) -> None:
         """Initialise the runner with a single calculation's configuration.
 
-        The last three arguments let tests, or other callers, swap in their own
-        way of scoring inverted repeats, running qsidd or writing results.
+        The last three arguments replace how inverted repeats are scored, how
+        qsidd is run and how results are written.
         """
         self.file = file
         self.algorithm = algorithm
@@ -198,7 +198,7 @@ class SistRunner:
         Without a JSON file this writes qsidd's text output, exactly as before.
         With one, the structured result is written to it, and the text output
         is only written as well if ``output_file`` is set. The text output then
-        comes from a second, normal qsidd run, so it is unchanged.
+        comes from a second qsidd run without full precision.
 
         Raises:
             ValueError: If ``algorithm`` is not one of M, Z, C, or A.
@@ -269,16 +269,14 @@ class SistRunner:
     def _run_json(self, algorithm: Algorithm) -> ScoredRepeats | None:
         """Run qsidd at full precision and write the structured result.
 
-        Every failure is turned into a failed result, which is written before
-        the error is raised again, so a file is always written. That includes a
-        result that fails validation, for example because qsidd printed NaN for
-        a value that must be a number.
+        Turns every failure, including a result that fails validation, into a
+        failed result and writes it before raising the error again.
 
         Args:
             algorithm: The algorithm to run.
 
         Returns:
-            The scored inverted repeats, so a text run can reuse them.
+            The scored inverted repeats, for reuse by a text run.
 
         Raises:
             ResultError: If the run failed.
@@ -410,8 +408,8 @@ class SistRunner:
         Args:
             algorithm: The algorithm to run.
             repeats: The scored inverted repeats, if the algorithm uses them.
-            precise: Ask for every output section at full precision, for the
-                structured result, instead of the flags the user chose.
+            precise: Ask for every output section at full precision, in place
+                of the flags the user chose.
 
         Returns:
             The qsidd command line.

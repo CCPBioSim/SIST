@@ -112,7 +112,7 @@ class FakeScorer:
 
 @pytest.fixture
 def directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Point SIST at placeholder qsidd binaries, so it can find them."""
+    """Point SIST at placeholder qsidd binaries."""
     placeholder = tmp_path / "qsidd"
     placeholder.write_text("", encoding="utf-8")
     monkeypatch.setenv("SIST_TRANS_THREE_BIN", str(placeholder))
