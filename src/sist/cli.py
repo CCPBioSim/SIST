@@ -46,6 +46,11 @@ def main(argv: list[str] | None = None) -> None:
     argument_parser = SistArgumentParser()
     parser = argument_parser.build_parser()
     args = parser.parse_args(argv)
+    program = Path(sys.argv[0]).name
+    command = [
+        program if argv is None and program != "__main__.py" else parser.prog,
+        *(sys.argv[1:] if argv is None else argv),
+    ]
 
     try:
         argument_parser.validate(args)
@@ -62,6 +67,8 @@ def main(argv: list[str] | None = None) -> None:
             print_parameters=args.print_parameters,
             print_ensemble_average=args.print_ensemble_average,
             output_file=args.output_file,
+            json_file=args.json_file,
+            command=command,
         )
         runner.run()
     except Exception:

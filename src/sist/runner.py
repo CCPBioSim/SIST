@@ -1,18 +1,120 @@
 """Orchestration that dispatches a SIST calculation to the qsidd binaries.
 
-Melting (M) and Z-DNA (Z) calculations run the single-transition
-``qsidd`` binary directly; cruciform (C) and competition (A) calculations
-first score candidate inverted repeats via :mod:`sist.ir_finder`, then run
-the single-transition or competition ``qsidd`` binary respectively.
+Algorithms that need inverted repeats first score candidates with
+:mod:`sist.ir_finder`. qsidd is then run with the binary and flags
+:mod:`sist.transitions` gives for the algorithm.
+
+The text output is written as before. When a JSON file is asked for, qsidd is
+run at full precision and the result is built by :mod:`sist.results`.
 """
 
 from __future__ import annotations
 
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Protocol
 
 from sist.binaries import BinaryLocator
 from sist.ir_finder import IRFinder
+from sist.results.builder import ResultBuilder
+from sist.results.diagnostics import ErrorCode, ResultError
+from sist.results.model import RunSettings
+from sist.results.qsidd_output import QsiddOutput
+from sist.results.sequence import SequenceInput
+from sist.results.writer import ResultWriter
+from sist.transitions import ALGORITHMS, Algorithm
+
+
+@dataclass(frozen=True)
+class ScoredRepeats:
+    """Inverted repeats scored for qsidd, and the IRF version that found them.
+
+    Attributes:
+        ir_string: The scored inverted repeats in the form ``qsidd -X`` expects.
+        irf_version: The IRF version, if it could be read.
+    """
+
+    ir_string: str
+    irf_version: str | None
+
+
+class InvertedRepeatScorer(Protocol):
+    """Something that scores candidate inverted repeats in a sequence file."""
+
+    def score(self, file: str) -> ScoredRepeats:
+        """Score the inverted repeats in a sequence file.
+
+        Args:
+            file: Path to the sequence file.
+
+        Returns:
+            The scored inverted repeats.
+        """
+        ...
+
+
+class QsiddExecutor(Protocol):
+    """Something that runs a qsidd command line."""
+
+    def run(self, command: list[str]) -> subprocess.CompletedProcess[str]:
+        """Run a qsidd command line.
+
+        Args:
+            command: The command line to run.
+
+        Returns:
+            The finished process, with its output as text.
+        """
+        ...
+
+
+class IRFinderScorer:
+    """Score inverted repeats with the IR finder and IRF.
+
+    Attributes:
+        temperature: Temperature in kelvin.
+        shape: ``"linear"`` or ``"circular"``.
+    """
+
+    def __init__(self, *, temperature: float, shape: str) -> None:
+        """Set up the scorer.
+
+        Args:
+            temperature: Temperature in kelvin.
+            shape: ``"linear"`` or ``"circular"``.
+        """
+        self.temperature = temperature
+        self.shape = shape
+
+    def score(self, file: str) -> ScoredRepeats:
+        """Score the inverted repeats in a sequence file.
+
+        Args:
+            file: Path to the sequence file.
+
+        Returns:
+            The scored inverted repeats.
+        """
+        finder = IRFinder(temperature=self.temperature, shape=self.shape)
+        ir_string = finder.compute_cruciform_energy_string(file)
+
+        return ScoredRepeats(ir_string, finder.irf_version)
+
+
+class SubprocessQsidd:
+    """Run qsidd as a subprocess."""
+
+    def run(self, command: list[str]) -> subprocess.CompletedProcess[str]:
+        """Run a qsidd command line and capture its output.
+
+        Args:
+            command: The command line to run.
+
+        Returns:
+            The finished process, with its output as text.
+        """
+        return subprocess.run(command, capture_output=True, text=True, check=False)
 
 
 class SistRunner:
@@ -33,6 +135,8 @@ class SistRunner:
         print_parameters: Print algorithm parameters.
         print_ensemble_average: Print ensemble average results.
         output_file: Path to write output to, or None to print to stdout.
+        json_file: Path to write the structured result to, or None to skip it.
+        command: The command line as given, recorded in the structured result.
     """
 
     def __init__(
@@ -50,8 +154,17 @@ class SistRunner:
         print_parameters: bool,
         print_ensemble_average: bool,
         output_file: str | None,
+        json_file: str | None = None,
+        command: list[str] | None = None,
+        ir_scorer: InvertedRepeatScorer | None = None,
+        qsidd: QsiddExecutor | None = None,
+        result_writer: ResultWriter | None = None,
     ) -> None:
-        """Initialise the runner with a single calculation's configuration."""
+        """Initialise the runner with a single calculation's configuration.
+
+        The last three arguments let tests, or other callers, swap in their own
+        way of scoring inverted repeats, running qsidd or writing results.
+        """
         self.file = file
         self.algorithm = algorithm
         self.temperature = temperature
@@ -64,8 +177,15 @@ class SistRunner:
         self.print_parameters = print_parameters
         self.print_ensemble_average = print_ensemble_average
         self.output_file = output_file
+        self.json_file = json_file
+        self.command = command
 
         self._binaries = BinaryLocator()
+        self._ir_scorer = ir_scorer or IRFinderScorer(
+            temperature=temperature, shape=self.shape
+        )
+        self._qsidd = qsidd or SubprocessQsidd()
+        self._result_writer = result_writer or ResultWriter()
 
     @property
     def shape(self) -> str:
@@ -75,90 +195,265 @@ class SistRunner:
     def run(self) -> None:
         """Run the calculation and write or print its output.
 
+        Without a JSON file this writes qsidd's text output, exactly as before.
+        With one, the structured result is written to it, and the text output
+        is only written as well if ``output_file`` is set. The text output then
+        comes from a second, normal qsidd run, so it is unchanged.
+
         Raises:
             ValueError: If ``algorithm`` is not one of M, Z, C, or A.
             subprocess.CalledProcessError: If the qsidd binary exits
-                non-zero.
+                non-zero while writing text output.
+            ResultError: If the run failed while writing a structured result.
+                The failed result is written before this is raised.
         """
-        command = self._build_command()
-        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        algorithm = self._algorithm()
+
+        if self.json_file:
+            repeats = self._run_json(algorithm)
+
+            if self.output_file:
+                self._write_text(algorithm, repeats)
+
+            return
+
+        repeats = (
+            self._ir_scorer.score(self.file)
+            if algorithm.needs_inverted_repeats
+            else None
+        )
+        self._write_text(algorithm, repeats)
+
+    def _algorithm(self) -> Algorithm:
+        """Look up the algorithm to run.
+
+        Returns:
+            The algorithm.
+
+        Raises:
+            ValueError: If the algorithm flag is not known.
+        """
+        algorithm = ALGORITHMS.get(self.algorithm)
+
+        if algorithm is None:
+            raise ValueError(
+                f"Unknown algorithm: {self.algorithm!r}. Expected one of "
+                f"{', '.join(ALGORITHMS)}."
+            )
+
+        return algorithm
+
+    def _write_text(self, algorithm: Algorithm, repeats: ScoredRepeats | None) -> None:
+        """Run qsidd as usual and write or print its text output.
+
+        Args:
+            algorithm: The algorithm to run.
+            repeats: The scored inverted repeats, if the algorithm uses them.
+
+        Raises:
+            subprocess.CalledProcessError: If qsidd exits non-zero.
+        """
+        command = self._build_command(algorithm, repeats, precise=False)
+        completed = self._qsidd.run(command)
+
+        if completed.returncode != 0:
+            raise subprocess.CalledProcessError(
+                completed.returncode, command, completed.stdout, completed.stderr
+            )
 
         if self.output_file:
-            Path(self.output_file).write_text(result.stdout, encoding="utf-8")
+            Path(self.output_file).write_text(completed.stdout, encoding="utf-8")
         else:
-            print(result.stdout, end="")
+            print(completed.stdout, end="")
 
-    def _build_command(self) -> list[str]:
-        """Build the qsidd command line for this calculation's algorithm."""
-        shared_parameters = self._shared_parameters()
+    def _run_json(self, algorithm: Algorithm) -> ScoredRepeats | None:
+        """Run qsidd at full precision and write the structured result.
 
-        if self.algorithm == "M":
-            return [
-                str(self._binaries.trans_three_binary()),
-                *self._flags(nearest_neighbor=self.nearest_neighbor),
-                *shared_parameters,
-                "-f",
-                self.file,
-            ]
+        Every failure is turned into a failed result, which is written before
+        the error is raised again, so a file is always written. That includes a
+        result that fails validation, for example because qsidd printed NaN for
+        a value that must be a number.
 
-        if self.algorithm == "Z":
-            return [
-                str(self._binaries.trans_three_binary()),
-                *self._flags(nearest_neighbor=False),
-                *shared_parameters,
-                "-Z",
-                "-f",
-                self.file,
-            ]
+        Args:
+            algorithm: The algorithm to run.
 
-        if self.algorithm == "C":
-            ir_string = self._cruciform_energy_string()
+        Returns:
+            The scored inverted repeats, so a text run can reuse them.
 
-            return [
-                str(self._binaries.trans_three_binary()),
-                *self._flags(nearest_neighbor=False),
-                *shared_parameters,
-                "-C",
-                "-X",
-                ir_string,
-                "-f",
-                self.file,
-            ]
+        Raises:
+            ResultError: If the run failed.
+        """
+        builder = ResultBuilder(self._settings(algorithm), command=self.command)
+        sequence: SequenceInput | None = None
+        output: QsiddOutput | None = None
+        repeats: ScoredRepeats | None = None
 
-        if self.algorithm == "A":
-            ir_string = self._cruciform_energy_string()
+        try:
+            sequence = builder.read_sequence()
+            repeats = self._score_for_json(algorithm)
+            output = self._run_precise_qsidd(algorithm, repeats)
+            result = builder.success(
+                output,
+                sequence,
+                ir_string=repeats.ir_string if repeats else None,
+                irf_version=repeats.irf_version if repeats else None,
+            )
+            self._result_writer.check(result)
+        except Exception as error:
+            failure = (
+                error
+                if isinstance(error, ResultError)
+                else ResultError(ErrorCode.INTERNAL_ERROR, str(error))
+            )
+            self._result_writer.write(
+                builder.failure(
+                    failure,
+                    sequence=sequence,
+                    output=output,
+                    irf_version=repeats.irf_version if repeats else None,
+                ),
+                Path(str(self.json_file)),
+            )
 
-            return [
-                str(self._binaries.trans_compete_binary()),
-                *self._flags(nearest_neighbor=self.nearest_neighbor),
-                *shared_parameters,
-                "-X",
-                ir_string,
-                "-f",
-                self.file,
-            ]
+            if failure is error:
+                raise
 
-        raise ValueError(
-            f"Unknown algorithm: {self.algorithm!r}. Expected one of M, Z, C, A."
+            raise failure from error
+
+        self._result_writer.write(result, Path(str(self.json_file)))
+
+        return repeats
+
+    def _settings(self, algorithm: Algorithm) -> RunSettings:
+        """Collect the settings a structured result records.
+
+        Args:
+            algorithm: The algorithm being run.
+
+        Returns:
+            The run's settings.
+        """
+        return RunSettings(
+            file=self.file,
+            algorithm=algorithm,
+            temperature=self.temperature,
+            superhelical_density=self.superhelical_density,
+            salt=self.salt,
+            energy_threshold=self.energy_threshold,
+            circular=self.circular,
+            nearest_neighbor=self.nearest_neighbor,
         )
 
-    def _cruciform_energy_string(self) -> str:
-        """Score candidate inverted repeats for the C/A algorithms."""
-        finder = IRFinder(temperature=self.temperature, shape=self.shape)
+    def _score_for_json(self, algorithm: Algorithm) -> ScoredRepeats | None:
+        """Score inverted repeats, reporting a missing IRF as a result error.
 
-        return finder.compute_cruciform_energy_string(self.file)
+        Args:
+            algorithm: The algorithm being run.
 
-    def _flags(self, *, nearest_neighbor: bool) -> list[str]:
-        """Build the qsidd boolean flags."""
+        Returns:
+            The scored inverted repeats, or None if the algorithm does not use
+            them.
+
+        Raises:
+            ResultError: If IRF is not installed.
+        """
+        if not algorithm.needs_inverted_repeats:
+            return None
+
+        try:
+            return self._ir_scorer.score(self.file)
+        except FileNotFoundError as error:
+            raise ResultError(
+                ErrorCode.IRF_NOT_FOUND,
+                f"The Inverted Repeats Finder executable '{IRFinder.IRF_EXECUTABLE}' "
+                "was not found on PATH. Algorithms that need inverted repeats "
+                "cannot run without it.",
+            ) from error
+
+    def _run_precise_qsidd(
+        self, algorithm: Algorithm, repeats: ScoredRepeats | None
+    ) -> QsiddOutput:
+        """Run qsidd with every output option and full precision.
+
+        Args:
+            algorithm: The algorithm to run.
+            repeats: The scored inverted repeats, if the algorithm uses them.
+
+        Returns:
+            The parsed qsidd output.
+
+        Raises:
+            ResultError: If qsidd cannot be found or exits with an error.
+        """
+        try:
+            command = self._build_command(algorithm, repeats, precise=True)
+        except FileNotFoundError as error:
+            raise ResultError(ErrorCode.QSIDD_NOT_FOUND, str(error)) from error
+
+        completed = self._qsidd.run(command)
+
+        if completed.returncode != 0:
+            raise ResultError(
+                ErrorCode.QSIDD_FAILED,
+                f"qsidd exited with code {completed.returncode}.",
+                exit_code=completed.returncode,
+                stderr=completed.stderr or None,
+            )
+
+        return QsiddOutput.parse(completed.stdout)
+
+    def _build_command(
+        self, algorithm: Algorithm, repeats: ScoredRepeats | None, *, precise: bool
+    ) -> list[str]:
+        """Build the qsidd command line for an algorithm.
+
+        Args:
+            algorithm: The algorithm to run.
+            repeats: The scored inverted repeats, if the algorithm uses them.
+            precise: Ask for every output section at full precision, for the
+                structured result, instead of the flags the user chose.
+
+        Returns:
+            The qsidd command line.
+
+        Raises:
+            FileNotFoundError: If the qsidd binary cannot be found.
+        """
+        command = [
+            str(self._binaries.binary(algorithm.engine)),
+            *self._flags(algorithm, precise=precise),
+            *self._shared_parameters(),
+            *algorithm.qsidd_flags,
+        ]
+
+        if algorithm.needs_inverted_repeats:
+            command.extend(["-X", repeats.ir_string if repeats else ""])
+
+        return [*command, "-f", self.file]
+
+    def _flags(self, algorithm: Algorithm, *, precise: bool) -> list[str]:
+        """Build the qsidd boolean flags.
+
+        Args:
+            algorithm: The algorithm being run.
+            precise: Ask for every output section at full precision.
+
+        Returns:
+            The flags.
+        """
         flags = []
 
-        if self.print_base_pair:
-            flags.append("-b")
-        if self.print_parameters:
-            flags.append("-p")
-        if self.print_ensemble_average:
-            flags.append("-r")
-        if nearest_neighbor:
+        if precise:
+            flags.extend(["-b", "-p", "-r", "-P"])
+        else:
+            if self.print_base_pair:
+                flags.append("-b")
+            if self.print_parameters:
+                flags.append("-p")
+            if self.print_ensemble_average:
+                flags.append("-r")
+
+        if self.nearest_neighbor and algorithm.supports_nearest_neighbor:
             flags.append("-n")
         if self.circular:
             flags.append("-c")
