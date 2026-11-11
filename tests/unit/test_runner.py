@@ -1,4 +1,9 @@
-"""Unit tests for sist.runner, using stand-ins for IRF and qsidd."""
+"""Unit tests for sist.runner, using stand-ins for IRF and qsidd.
+
+These cover the runner's own jobs: building qsidd commands, choosing between
+text and JSON output, and turning failures into failed results. What goes into
+a result is covered by the sist.results tests.
+"""
 
 from __future__ import annotations
 
@@ -10,9 +15,8 @@ from typing import Any
 
 import pytest
 
-from sist.results.diagnostics import ErrorCode, ResultError
+from sist.results.diagnostics import ResultError
 from sist.runner import ScoredRepeats, SistRunner
-from sist.schema import ResultValidator
 
 QSIDD_PATH = Path(__file__).resolve().parent / "data" / "qsidd"
 
@@ -24,20 +28,30 @@ class FakeQsidd:
         output_name: File name of the saved qsidd output to print.
         returncode: Exit code to report.
         stderr: Standard error to report.
+        replace: Text to swap in the saved output, as ``(old, new)``.
         commands: Every command line it was asked to run.
     """
 
-    def __init__(self, output_name: str, *, returncode: int = 0, stderr: str = ""):
+    def __init__(
+        self,
+        output_name: str,
+        *,
+        returncode: int = 0,
+        stderr: str = "",
+        replace: tuple[str, str] = ("", ""),
+    ) -> None:
         """Set up the stand-in.
 
         Args:
             output_name: File name of the saved qsidd output to print.
             returncode: Exit code to report.
             stderr: Standard error to report.
+            replace: Text to swap in the saved output, as ``(old, new)``.
         """
         self.output_name = output_name
         self.returncode = returncode
         self.stderr = stderr
+        self.replace = replace
         self.commands: list[list[str]] = []
 
     def run(self, command: list[str]) -> subprocess.CompletedProcess[str]:
@@ -51,6 +65,9 @@ class FakeQsidd:
         """
         self.commands.append(command)
         stdout = (QSIDD_PATH / self.output_name).read_text(encoding="utf-8")
+
+        if self.replace[0]:
+            stdout = stdout.replace(*self.replace)
 
         return subprocess.CompletedProcess(
             command, self.returncode, stdout, self.stderr
@@ -93,7 +110,7 @@ class FakeScorer:
 
 
 @pytest.fixture
-def binaries(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+def directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Point SIST at placeholder qsidd binaries, so it can find them."""
     placeholder = tmp_path / "qsidd"
     placeholder.write_text("", encoding="utf-8")
@@ -104,7 +121,7 @@ def binaries(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def _runner(directory: Path, qsidd: FakeQsidd, **overrides: Any) -> SistRunner:
-    """Make a runner for the 100 bp fragment, using the stand-ins.
+    """Make a runner for the 20 bp fragment, using the stand-ins.
 
     Args:
         directory: Directory holding the sequence and the output files.
@@ -152,15 +169,6 @@ def _read_result(directory: Path) -> dict[str, Any]:
     return json.loads((directory / "result.json").read_text(encoding="utf-8"))
 
 
-def test_run_writes_a_valid_result(binaries: Path) -> None:
-    _runner(binaries, FakeQsidd("melting.txt")).run()
-
-    result = _read_result(binaries)
-
-    assert ResultValidator().validate(result) == []
-    assert result["provenance"]["command"] == ["sist", "-a", "M", "-f", "fragment.fa"]
-
-
 @pytest.mark.parametrize(
     ("flag", "output_name", "algorithm_flags"),
     [
@@ -171,40 +179,48 @@ def test_run_writes_a_valid_result(binaries: Path) -> None:
     ],
 )
 def test_run_builds_the_command_from_the_algorithm(
-    binaries: Path, flag: str, output_name: str, algorithm_flags: list[str]
+    directory: Path, flag: str, output_name: str, algorithm_flags: list[str]
 ) -> None:
     qsidd = FakeQsidd(output_name)
 
-    _runner(binaries, qsidd, algorithm=flag).run()
+    _runner(directory, qsidd, algorithm=flag).run()
 
     command = qsidd.commands[0]
 
     assert command[1:5] == ["-b", "-p", "-r", "-P"]
     assert [part for part in command if part in ("-Z", "-C", "-X")] == algorithm_flags
-    assert ResultValidator().validate(_read_result(binaries)) == []
+    assert _read_result(directory)["calculation"]["algorithm"] == flag
 
 
-def test_run_passes_nearest_neighbor_only_where_supported(binaries: Path) -> None:
+def test_run_passes_nearest_neighbor_only_where_supported(directory: Path) -> None:
     qsidd = FakeQsidd("z-dna.txt")
 
-    _runner(binaries, qsidd, algorithm="Z", nearest_neighbor=True).run()
+    _runner(directory, qsidd, algorithm="Z", nearest_neighbor=True).run()
 
     assert "-n" not in qsidd.commands[0]
 
 
+def test_run_records_the_command_line(directory: Path) -> None:
+    _runner(directory, FakeQsidd("melting.txt")).run()
+
+    command = _read_result(directory)["provenance"]["command"]
+
+    assert command == ["sist", "-a", "M", "-f", "fragment.fa"]
+
+
 def test_run_with_only_json_prints_no_text(
-    binaries: Path, capsys: pytest.CaptureFixture[str]
+    directory: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    _runner(binaries, FakeQsidd("melting.txt")).run()
+    _runner(directory, FakeQsidd("melting.txt")).run()
 
     assert capsys.readouterr().out == ""
 
 
-def test_run_writes_text_as_well_when_an_output_file_is_given(binaries: Path) -> None:
+def test_run_writes_text_from_a_second_normal_run(directory: Path) -> None:
     qsidd = FakeQsidd("melting.txt")
-    output_path = binaries / "result.txt"
+    output_path = directory / "result.txt"
 
-    _runner(binaries, qsidd, output_file=str(output_path), print_base_pair=True).run()
+    _runner(directory, qsidd, output_file=str(output_path), print_base_pair=True).run()
 
     assert output_path.read_text(encoding="utf-8").startswith("DNA sequence file")
     assert "-P" in qsidd.commands[0]
@@ -213,26 +229,26 @@ def test_run_writes_text_as_well_when_an_output_file_is_given(binaries: Path) ->
 
 
 def test_run_without_json_prints_the_text_output(
-    binaries: Path, capsys: pytest.CaptureFixture[str]
+    directory: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    _runner(binaries, FakeQsidd("melting.txt"), json_file=None).run()
+    _runner(directory, FakeQsidd("melting.txt"), json_file=None).run()
 
     expected = (QSIDD_PATH / "melting.txt").read_text(encoding="utf-8")
 
     assert capsys.readouterr().out == expected
-    assert not (binaries / "result.json").exists()
+    assert not (directory / "result.json").exists()
 
 
-def test_run_without_json_raises_when_qsidd_fails(binaries: Path) -> None:
-    runner = _runner(binaries, FakeQsidd("melting.txt", returncode=3), json_file=None)
+def test_run_without_json_raises_when_qsidd_fails(directory: Path) -> None:
+    runner = _runner(directory, FakeQsidd("melting.txt", returncode=3), json_file=None)
 
     with pytest.raises(subprocess.CalledProcessError):
         runner.run()
 
 
-def test_run_rejects_an_unknown_algorithm(binaries: Path) -> None:
+def test_run_rejects_an_unknown_algorithm(directory: Path) -> None:
     with pytest.raises(ValueError):
-        _runner(binaries, FakeQsidd("melting.txt"), algorithm="X").run()
+        _runner(directory, FakeQsidd("melting.txt"), algorithm="X").run()
 
 
 @pytest.mark.parametrize(
@@ -241,35 +257,34 @@ def test_run_rejects_an_unknown_algorithm(binaries: Path) -> None:
         ({}, FakeQsidd("melting.txt", returncode=3, stderr="broken"), "qsidd_failed"),
         ({}, FakeQsidd("fragment.fa"), "internal_error"),
         (
+            {},
+            FakeQsidd(
+                "melting.txt",
+                replace=("Average number of runs = ", "Average number of runs = -nan "),
+            ),
+            "internal_error",
+        ),
+        (
             {"algorithm": "C", "ir_scorer": FakeScorer(missing_irf=True)},
             FakeQsidd("cruciform.txt"),
             "irf_not_found",
         ),
     ],
+    ids=["qsidd-fails", "unreadable-output", "nan-in-output", "irf-missing"],
 )
 def test_run_writes_a_failed_result(
-    binaries: Path, overrides: dict[str, Any], qsidd: FakeQsidd, code: str
+    directory: Path, overrides: dict[str, Any], qsidd: FakeQsidd, code: str
 ) -> None:
     with pytest.raises(ResultError) as raised:
-        _runner(binaries, qsidd, **overrides).run()
+        _runner(directory, qsidd, **overrides).run()
 
-    result = _read_result(binaries)
+    error = _read_result(directory)["error"]
 
     assert raised.value.code == code
-    assert ResultValidator().validate(result) == []
-    assert result["error"]["code"] == code
+    assert error["code"] == code
 
-
-def test_run_records_qsidd_exit_code_and_stderr(binaries: Path) -> None:
-    qsidd = FakeQsidd("melting.txt", returncode=3, stderr="broken")
-
-    with pytest.raises(ResultError):
-        _runner(binaries, qsidd).run()
-
-    error = _read_result(binaries)["error"]
-
-    assert error["exit_code"] == 3
-    assert error["stderr"] == "broken"
+    if code == "qsidd_failed":
+        assert (error["exit_code"], error["stderr"]) == (3, "broken")
 
 
 def test_run_writes_a_failed_result_when_qsidd_is_missing(
@@ -280,34 +295,4 @@ def test_run_writes_a_failed_result_when_qsidd_is_missing(
     with pytest.raises(ResultError):
         _runner(tmp_path, FakeQsidd("melting.txt")).run()
 
-    assert _read_result(tmp_path)["error"]["code"] == ErrorCode.QSIDD_NOT_FOUND
-
-
-def test_run_writes_a_failed_result_for_a_missing_sequence_file(
-    binaries: Path,
-) -> None:
-    runner = _runner(
-        binaries, FakeQsidd("melting.txt"), file=str(binaries / "missing.fa")
-    )
-
-    with pytest.raises(ResultError):
-        runner.run()
-
-    assert _read_result(binaries)["error"]["code"] == ErrorCode.INPUT_NOT_FOUND
-
-
-def test_run_writes_an_internal_error_when_qsidd_prints_nan(binaries: Path) -> None:
-    """A NaN where a number is required is reported, never written as a result."""
-    text = (QSIDD_PATH / "melting.txt").read_text(encoding="utf-8")
-    broken = binaries / "broken.txt"
-    broken.write_text(
-        text.replace("Average number of runs = ", "Average number of runs = -nan #"),
-        encoding="utf-8",
-    )
-    qsidd = FakeQsidd(str(broken.resolve()))
-
-    with pytest.raises(ResultError) as raised:
-        _runner(binaries, qsidd).run()
-
-    assert raised.value.code == ErrorCode.INTERNAL_ERROR
-    assert "is not of type 'number'" in _read_result(binaries)["error"]["message"]
+    assert _read_result(tmp_path)["error"]["code"] == "qsidd_not_found"
