@@ -26,8 +26,7 @@ USAGE = "usage: sist-validate RESULT.json [RESULT.json ...]"
 def main(argv: list[str] | None = None) -> None:
     """Check each SIST result file and print what was found.
 
-    Every file is checked before exiting, so one bad file does not hide
-    problems in the others.
+    Every file is checked before exiting.
 
     Args:
         argv: Result file paths, or None to use ``sys.argv[1:]``.
@@ -93,9 +92,8 @@ def _report(validator: ResultValidator, path: Path) -> bool:
 def _read_result(path: Path) -> dict[str, Any]:
     """Read a result file, refusing anything that is not strict JSON.
 
-    Python's json module accepts ``NaN`` and ``Infinity`` by default, even
-    though they are not valid JSON and other tools cannot read them. Refusing
-    them means a file that passes here can be read anywhere.
+    Refuses ``NaN`` and ``Infinity``, which Python's json module accepts by
+    default but are not valid JSON.
 
     Args:
         path: Path to the result file.
