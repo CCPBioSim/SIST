@@ -30,21 +30,8 @@ def _reference_melting_energy(base: str, *, temperature: float, salt: float) -> 
     return at_energy if base in ("a", "t", "A", "T") else gc_energy
 
 
-@pytest.mark.parametrize("base", ["A", "a", "T", "t"])
-def test_melting_energy_at_bases(
-    calculator: energetics.CruciformEnergetics, base: str
-) -> None:
-    expected = _reference_melting_energy(base, temperature=TEMPERATURE, salt=SALT)
-
-    actual = calculator.melting_energy(base)
-
-    assert actual == pytest.approx(expected)
-
-
-@pytest.mark.parametrize("base", ["G", "g", "C", "c"])
-def test_melting_energy_gc_bases(
-    calculator: energetics.CruciformEnergetics, base: str
-) -> None:
+@pytest.mark.parametrize("base", ["A", "a", "T", "t", "G", "g", "C", "c"])
+def test_melting_energy(calculator: energetics.CruciformEnergetics, base: str) -> None:
     expected = _reference_melting_energy(base, temperature=TEMPERATURE, salt=SALT)
 
     actual = calculator.melting_energy(base)
@@ -125,7 +112,7 @@ def test_imperfection_energies_perfect_match_is_all_zero(
 def test_imperfection_energies_bulge_on_left_arm(
     calculator: energetics.CruciformEnergetics,
 ) -> None:
-    # Right arm has a gap at position 1 -> bulge on the left arm base "T".
+    """A gap in the right arm leaves the left arm's base "T" as a bulge."""
     right_arm = ["*", "-", "*"]
     left_arm = ["A", "T", "G"]
 
@@ -143,7 +130,7 @@ def test_imperfection_energies_bulge_on_left_arm(
 def test_imperfection_energies_bulge_on_right_arm(
     calculator: energetics.CruciformEnergetics,
 ) -> None:
-    # Left arm has a gap at position 1 -> bulge on the right arm base "C".
+    """A gap in the left arm leaves the right arm's base "C" as a bulge."""
     right_arm = ["*", "C", "*"]
     left_arm = ["A", "-", "G"]
 
@@ -159,7 +146,7 @@ def test_imperfection_energies_bulge_on_right_arm(
 def test_imperfection_energies_internal_loop(
     calculator: energetics.CruciformEnergetics,
 ) -> None:
-    # Two adjacent open positions (right arm not '*' on both sides of index 1).
+    """Two open positions next to each other form an internal loop."""
     right_arm = ["*", "-", "A", "-", "*"]
     left_arm = ["A", "T", "T", "T", "G"]
 
@@ -177,7 +164,7 @@ def test_imperfection_energies_internal_loop(
 def test_imperfection_energies_mismatch(
     calculator: energetics.CruciformEnergetics,
 ) -> None:
-    # A single mismatch flanked by perfect matches on both sides.
+    """A single mismatch between two perfect matches."""
     right_arm = ["*", "A", "*"]
     left_arm = ["G", "G", "T"]
 

@@ -48,65 +48,46 @@ def test_read_sequence(tmp_path: Path) -> None:
     assert IRFinder.read_sequence(one_line) == "ABCDEFGH"
 
 
-def test_sequence_length_and_shift_linear(tmp_path: Path) -> None:
+@pytest.mark.parametrize(("circular", "shifted"), [(False, ""), (True, "EFGHABCD")])
+def test_sequence_length_and_shift(
+    tmp_path: Path, circular: bool, shifted: str
+) -> None:
     one_line = tmp_path / "one_line.seq.fa"
     one_line.write_text(">one_line.seq.fa\nABCDEFGH", encoding="utf-8")
 
-    length, shifted = IRFinder.sequence_length_and_shift(one_line, circular=False)
+    length, actual = IRFinder.sequence_length_and_shift(one_line, circular=circular)
 
     assert length == 8
-    assert shifted == ""
+    assert actual == shifted
 
 
-def test_sequence_length_and_shift_circular(tmp_path: Path) -> None:
-    one_line = tmp_path / "one_line.seq.fa"
-    one_line.write_text(">one_line.seq.fa\nABCDEFGH", encoding="utf-8")
-
-    length, shifted = IRFinder.sequence_length_and_shift(one_line, circular=True)
-
-    assert length == 8
-    assert shifted == "EFGHABCD"
-
-
-def test_parse_loop_header_first_example() -> None:
-    # From example/one_line.pbr322.toy.fa...txt.html
-    line = "    Indices: 2982--2992,2996--3006  Loop: 3  Score: 22"
-
-    loop_length, loop_start, ir_start, ir_end, ir_length = IRFinder.parse_loop_header(
-        line
-    )
-
-    assert loop_length == 3
-    assert loop_start == 2993
-    assert ir_start == 2982
-    assert ir_end == 3006
-    assert ir_length == 25
+@pytest.mark.parametrize(
+    ("line", "expected"),
+    [
+        (
+            "    Indices: 2982--2992,2996--3006  Loop: 3  Score: 22",
+            (3, 2993, 2982, 3006, 25),
+        ),
+        (
+            "    Indices: 3089--3110,3115--3136  Loop: 4  Score: 44",
+            (4, 3111, 3089, 3136, 48),
+        ),
+    ],
+)
+def test_parse_loop_header(line: str, expected: tuple[int, ...]) -> None:
+    """The examples come from the IRF report for pbr322.toy.fa in the docs."""
+    assert IRFinder.parse_loop_header(line) == expected
 
 
-def test_parse_loop_header_second_example() -> None:
-    line = "    Indices: 3089--3110,3115--3136  Loop: 4  Score: 44"
-
-    loop_length, loop_start, ir_start, ir_end, ir_length = IRFinder.parse_loop_header(
-        line
-    )
-
-    assert loop_length == 4
-    assert loop_start == 3111
-    assert ir_start == 3089
-    assert ir_end == 3136
-    assert ir_length == 48
-
-
-def test_parse_arm_left() -> None:
-    line = "       2982 >> AAACCACCGCT >> 2992"
-
-    assert IRFinder.parse_arm(line) == list("AAACCACCGCT")
-
-
-def test_parse_arm_right() -> None:
-    line = "       3006 << *********** << 2996"
-
-    assert IRFinder.parse_arm(line) == list("***********")
+@pytest.mark.parametrize(
+    ("line", "arm"),
+    [
+        ("       2982 >> AAACCACCGCT >> 2992", "AAACCACCGCT"),
+        ("       3006 << *********** << 2996", "***********"),
+    ],
+)
+def test_parse_arm(line: str, arm: str) -> None:
+    assert IRFinder.parse_arm(line) == list(arm)
 
 
 @pytest.mark.skipif(shutil.which("irf") is None, reason="requires the irf executable")
@@ -123,13 +104,12 @@ def test_compute_cruciform_energy_string_smoke(tmp_path: Path, monkeypatch) -> N
     assert result.startswith("1,0,10000,|")
 
 
-def test_parse_irf_version_reads_the_report_header() -> None:
-    lines = ["Inverted Repeats Finder Program written by:", "", "Version 3.05", ""]
-
-    assert IRFinder.parse_irf_version(lines) == "3.05"
-
-
-def test_parse_irf_version_returns_none_without_a_version() -> None:
-    lines = ["Sequence: one_line.seq.fa", "Length: 8"]
-
-    assert IRFinder.parse_irf_version(lines) is None
+@pytest.mark.parametrize(
+    ("lines", "version"),
+    [
+        (["Inverted Repeats Finder Program written by:", "Version 3.05"], "3.05"),
+        (["Sequence: one_line.seq.fa", "Length: 8"], None),
+    ],
+)
+def test_parse_irf_version(lines: list[str], version: str | None) -> None:
+    assert IRFinder.parse_irf_version(lines) == version
