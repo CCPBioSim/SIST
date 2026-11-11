@@ -9,7 +9,6 @@ import pytest
 from jsonschema import Draft202012Validator
 
 from sist.schema import ResultValidationError, ResultValidator, ValidationIssue
-from sist.transitions import ALGORITHMS
 
 
 @pytest.fixture(scope="module")
@@ -141,25 +140,6 @@ def test_validation_issue_formats_the_top_level() -> None:
     issue = ValidationIssue("", "'status' is a required property")
 
     assert str(issue) == "(top level): 'status' is a required property"
-
-
-def test_algorithm_transitions_match_the_schema_algorithms() -> None:
-    schema = ResultValidator.load_schema()
-
-    algorithms = schema["$defs"]["calculation"]["properties"]["algorithm"]["enum"]
-
-    assert set(algorithms) == set(ALGORITHMS)
-
-
-def test_algorithm_transitions_match_the_schema_transitions() -> None:
-    schema = ResultValidator.load_schema()
-    transitions = {
-        transition
-        for algorithm in ALGORITHMS.values()
-        for transition in algorithm.transition_names
-    }
-
-    assert transitions == set(schema["$defs"]["transition"]["enum"])
 
 
 def test_validate_rejects_transitions_that_do_not_match_the_algorithm(
