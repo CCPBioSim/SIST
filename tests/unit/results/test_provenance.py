@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import subprocess
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 
+from sist.results import provenance
 from sist.results.provenance import ProvenanceRecorder
 
 
@@ -38,3 +41,52 @@ def test_to_dict_has_the_schema_shape() -> None:
     assert section["software"]["name"] == "SIST"
     assert section["software"]["irf_version"] == "3.09"
     assert set(section["environment"]) == {"python", "platform"}
+
+
+def test_git_sha_is_read_from_a_source_checkout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("SIST_GIT_SHA", raising=False)
+    module_path = tmp_path / "src" / "sist" / "results" / "provenance.py"
+    (tmp_path / ".git").mkdir()
+    monkeypatch.setattr(provenance, "__file__", str(module_path))
+    monkeypatch.setattr(
+        provenance.subprocess,
+        "run",
+        lambda command, **_: subprocess.CompletedProcess(command, 0, "0123abc\n"),
+    )
+
+    assert ProvenanceRecorder.git_sha() == "0123abc"
+
+
+def test_git_sha_is_none_for_an_installed_copy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("SIST_GIT_SHA", raising=False)
+    module_path = tmp_path / "site-packages" / "sist" / "results" / "provenance.py"
+    monkeypatch.setattr(provenance, "__file__", str(module_path))
+
+    assert ProvenanceRecorder.git_sha() is None
+
+
+def test_git_sha_is_none_when_git_cannot_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def missing_git(command: list[str], **_: object) -> None:
+        """Behave as if git is not installed.
+
+        Args:
+            command: The command that would have run.
+
+        Raises:
+            OSError: Always.
+        """
+        raise OSError("git")
+
+    monkeypatch.delenv("SIST_GIT_SHA", raising=False)
+    (tmp_path / ".git").mkdir()
+    module_path = tmp_path / "src" / "sist" / "results" / "provenance.py"
+    monkeypatch.setattr(provenance, "__file__", str(module_path))
+    monkeypatch.setattr(provenance.subprocess, "run", missing_git)
+
+    assert ProvenanceRecorder.git_sha() is None
