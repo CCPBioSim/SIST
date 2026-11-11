@@ -18,7 +18,7 @@ SETTINGS = ["-T", "310.0", "-s", "0.06", "-i", "0.01", "-t", "12.0"]
 
 @pytest.fixture(scope="session")
 def fragment(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """The first 2000 bp of the regression sequence, to keep the runs short."""
+    """The first 2000 bp of the regression sequence."""
     lines = REGRESSION_DATA.read_text(encoding="utf-8").splitlines()
     sequence = "".join(line for line in lines if not line.startswith(">"))
     path = tmp_path_factory.mktemp("precise") / "fragment.fa"

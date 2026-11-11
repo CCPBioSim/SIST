@@ -32,7 +32,7 @@ class FakeIRFinder:
             file_path: Path to the sequence file.
 
         Returns:
-            The string, with the settings in it so the test can check them.
+            The settings and file path, joined by commas.
         """
         return f"{self.temperature},{self.shape},{file_path}"
 

@@ -106,7 +106,7 @@ def test_parse_arm(line: str, arm: str) -> None:
 def test_compute_cruciform_energy_string_scores_a_saved_irf_report(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, shape: str
 ) -> None:
-    """IRF is replaced by its saved report for pbr322.toy.fa, so IRF is not needed."""
+    """Scores pbr322.toy.fa from its saved IRF report, with IRF replaced."""
     monkeypatch.chdir(tmp_path)
     shutil.copy2(TOY_PATH, "pbr322.toy.fa")
     shutil.copy2(IRF_REPORT_PATH, IRF_REPORT_PATH.name)
@@ -188,7 +188,7 @@ def test_score_skips_loops_longer_than_the_maximum(
 def test_circular_pass_maps_repeats_back_to_the_original_positions(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The shifted sequence starts half way round, so positions move back by half."""
+    """Repeats in the shifted sequence move back by half the sequence length."""
     report = IRF_REPORT_PATH.read_text(encoding="utf-8")
 
     entries = _score_with_reports(tmp_path, monkeypatch, circular_report=report)
