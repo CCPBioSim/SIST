@@ -121,3 +121,15 @@ def test_compute_cruciform_energy_string_smoke(tmp_path: Path, monkeypatch) -> N
     result = finder.compute_cruciform_energy_string("toy.fa")
 
     assert result.startswith("1,0,10000,|")
+
+
+def test_parse_irf_version_reads_the_report_header() -> None:
+    lines = ["Inverted Repeats Finder Program written by:", "", "Version 3.05", ""]
+
+    assert IRFinder.parse_irf_version(lines) == "3.05"
+
+
+def test_parse_irf_version_returns_none_without_a_version() -> None:
+    lines = ["Sequence: one_line.seq.fa", "Length: 8"]
+
+    assert IRFinder.parse_irf_version(lines) is None

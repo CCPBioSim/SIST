@@ -33,6 +33,8 @@ class IRFinder:
         energetics: Energy calculator for this temperature. Uses a fixed
             salt concentration independent of (and always overriding) any
             ``-i``/salt value passed to the ``qsidd`` binaries.
+        irf_version: IRF version read from the first report scored, or None
+            before any report has been read.
     """
 
     IRF_EXECUTABLE = "irf"
@@ -60,6 +62,7 @@ class IRFinder:
         self.energetics = CruciformEnergetics(
             temperature=temperature, salt=self.CRUCIFORM_SALT
         )
+        self.irf_version: str | None = None
 
         self._seen: dict[tuple[int, int, int], int] = {}
         self._ir_string_parts: list[str] = ["1,0,10000,|"]
@@ -226,6 +229,26 @@ class IRFinder:
         return list(line.split()[2])
 
     @staticmethod
+    def parse_irf_version(report_lines: list[str]) -> str | None:
+        """Read the IRF version from the header of an IRF report.
+
+        Args:
+            report_lines: Text lines of an IRF report, as returned by
+                ``_read_report_lines``.
+
+        Returns:
+            The version, such as ``"3.05"``, or None if the report does not
+            state one.
+        """
+        for line in report_lines:
+            words = line.split()
+
+            if len(words) == 2 and words[0] == "Version":
+                return words[1]
+
+        return None
+
+    @staticmethod
     def _read_report_lines(report_path: Path) -> list[str]:
         """Read an IRF HTML report's text content, one entry per line.
 
@@ -349,7 +372,12 @@ class IRFinder:
             right_arm: list[str] = []
             loop_length = loop_start = ir_start = ir_end = ir_length = 0
 
-            for line in self._read_report_lines(report_path):
+            report_lines = self._read_report_lines(report_path)
+
+            if self.irf_version is None:
+                self.irf_version = self.parse_irf_version(report_lines)
+
+            for line in report_lines:
                 if "frequent" in line:
                     reading = False
 
