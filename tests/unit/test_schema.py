@@ -298,3 +298,37 @@ def test_validate_checks_transitions_in_a_failed_run(
     issues = validator.validate(failed_result)
 
     assert [issue.path for issue in issues] == ["calculation/transitions"]
+
+
+def test_validate_accepts_a_missing_timestamp(
+    validator: ResultValidator, melting_result: dict[str, Any]
+) -> None:
+    melting_result["provenance"]["started_at"] = None
+
+    issues = validator.validate(melting_result)
+
+    assert issues == []
+
+
+def test_validate_rejects_pairwise_with_a_transition_not_calculated(
+    validator: ResultValidator, competition_result: dict[str, Any]
+) -> None:
+    competition_result["calculation"]["algorithm"] = "A"
+    competition_result["calculation"]["transitions"] = ["melting", "z_dna"]
+    del competition_result["transitions"]["cruciform"]
+
+    issues = validator.validate(competition_result)
+
+    assert "uses a transition not in calculation.transitions" in [
+        issue.message for issue in issues
+    ]
+
+
+def test_validate_requires_a_sequence_length_for_a_successful_run(
+    validator: ResultValidator, melting_result: dict[str, Any]
+) -> None:
+    melting_result["input"]["sequence_length_bp"] = None
+
+    issues = validator.validate(melting_result)
+
+    assert [issue.path for issue in issues] == ["input/sequence_length_bp"]
