@@ -237,7 +237,7 @@ class IRFinder:
                 ``_read_report_lines``.
 
         Returns:
-            The version, such as ``"3.05"``, or None if the report does not
+            The version, such as ``"3.09"``, or None if the report does not
             state one.
         """
         for line in report_lines:

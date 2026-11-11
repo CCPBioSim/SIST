@@ -107,7 +107,7 @@ def test_compute_cruciform_energy_string_smoke(tmp_path: Path, monkeypatch) -> N
 @pytest.mark.parametrize(
     ("lines", "version"),
     [
-        (["Inverted Repeats Finder Program written by:", "Version 3.05"], "3.05"),
+        (["Inverted Repeats Finder Program written by:", "Version 3.09"], "3.09"),
         (["Sequence: one_line.seq.fa", "Length: 8"], None),
     ],
 )
