@@ -89,3 +89,22 @@ def test_main_exits_2_without_files(capsys: pytest.CaptureFixture[str]) -> None:
 
     assert raised.value.code == 2
     assert "usage: sist-validate" in capsys.readouterr().err
+
+
+def test_main_exits_1_on_an_unexpected_error(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    def broken_validator() -> None:
+        """Fail as an unexpected error would.
+
+        Raises:
+            RuntimeError: Always.
+        """
+        raise RuntimeError("broken")
+
+    monkeypatch.setattr("sist.schema_cli.ResultValidator", broken_validator)
+
+    with pytest.raises(SystemExit) as raised:
+        main([str(tmp_path / "result.json")])
+
+    assert raised.value.code == 1

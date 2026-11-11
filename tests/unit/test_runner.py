@@ -10,13 +10,14 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from sist.results.diagnostics import ResultError
-from sist.runner import ScoredRepeats, SistRunner
+from sist.runner import ScoredRepeats, SistRunner, SubprocessQsidd
 
 QSIDD_PATH = Path(__file__).resolve().parent / "data" / "qsidd"
 
@@ -296,3 +297,90 @@ def test_run_writes_a_failed_result_when_qsidd_is_missing(
         _runner(tmp_path, FakeQsidd("melting.txt")).run()
 
     assert _read_result(tmp_path)["error"]["code"] == "qsidd_not_found"
+
+
+def test_run_passes_the_chosen_text_flags(directory: Path) -> None:
+    qsidd = FakeQsidd("melting.txt")
+
+    _runner(
+        directory,
+        qsidd,
+        json_file=None,
+        print_parameters=True,
+        print_ensemble_average=True,
+        nearest_neighbor=True,
+        circular=True,
+    ).run()
+
+    assert qsidd.commands[0][1:5] == ["-p", "-r", "-n", "-c"]
+
+
+def test_ir_finder_scorer_returns_the_string_and_version(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeIRFinder:
+        """Stand-in for IRFinder that records the shape it was given."""
+
+        irf_version = "3.09"
+
+        def __init__(self, *, temperature: float, shape: str) -> None:
+            """Record the settings.
+
+            Args:
+                temperature: Temperature in kelvin.
+                shape: ``"linear"`` or ``"circular"``.
+            """
+            self.shape = shape
+
+        def compute_cruciform_energy_string(self, file: str) -> str:
+            """Return a string naming the shape and file.
+
+            Args:
+                file: Path to the sequence file.
+
+            Returns:
+                The string.
+            """
+            return f"{self.shape},{file}"
+
+    monkeypatch.setattr("sist.runner.IRFinder", FakeIRFinder)
+    runner = _runner_without_stand_ins(circular=True)
+
+    repeats = runner._ir_scorer.score("fragment.fa")
+
+    assert repeats == ScoredRepeats("circular,fragment.fa", "3.09")
+
+
+def test_subprocess_qsidd_runs_a_command() -> None:
+    completed = SubprocessQsidd().run([sys.executable, "-c", "print('ran')"])
+
+    assert completed.returncode == 0
+    assert completed.stdout == "ran\n"
+
+
+def _runner_without_stand_ins(**overrides: Any) -> SistRunner:
+    """Make a runner with its default IR scorer and qsidd executor.
+
+    Args:
+        **overrides: Settings to change from the defaults.
+
+    Returns:
+        The runner.
+    """
+    settings: dict[str, Any] = {
+        "file": "fragment.fa",
+        "algorithm": "C",
+        "temperature": 310.0,
+        "superhelical_density": 0.06,
+        "salt": 0.01,
+        "energy_threshold": 12.0,
+        "circular": False,
+        "nearest_neighbor": False,
+        "print_base_pair": False,
+        "print_parameters": False,
+        "print_ensemble_average": False,
+        "output_file": None,
+    }
+    settings.update(overrides)
+
+    return SistRunner(**settings)
