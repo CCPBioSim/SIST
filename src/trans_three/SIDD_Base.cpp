@@ -52,6 +52,7 @@ SIDD_Base::SIDD_Base() {
   sum_1RG = sum_2RG = sum_3RG = 0.0;
   sum_1RB = sum_2RB = sum_3RB = 0.0;
   set_showbase(1);
+  precise = 0;
 }
 
 SIDD_Base::~SIDD_Base() {

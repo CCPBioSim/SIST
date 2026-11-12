@@ -30,7 +30,7 @@ def _base_result(algorithm: str, transitions: list[str]) -> dict[str, Any]:
                 "version": "1.1.0",
                 "git_sha": None,
                 "engine": "trans_compete" if algorithm == "A" else "trans_three",
-                "irf_version": "3.05" if algorithm in "CA" else None,
+                "irf_version": "3.09" if algorithm in "CA" else None,
             },
             "environment": {"python": "3.13.13", "platform": "Linux-x86_64"},
             "command": ["sist", "-a", algorithm, "-f", "sequence.fa"],

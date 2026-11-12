@@ -164,6 +164,8 @@ bool SIDD_4R::Search_Low4RE() {
          << endl;
     // V: And just in case I'll print the scaling factor.
     cout << "Scaling factor " << scaling_factor << endl;
+    if (precise)
+      cout << "ln Partition Function = " << log(ZsumB) - scaling_factor << endl;
     cout << "Average number of runs = " << runs << endl;
     cout << "Transition Probability = " << prob << endl;
   }

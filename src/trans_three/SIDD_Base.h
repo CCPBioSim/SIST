@@ -66,6 +66,7 @@ protected:
   int MinWindowSize;
   int MaxWindowSize;
   int results;
+  int precise; // print values at full precision
   std::string cr_string;
   double min_E;
   double max_E;
@@ -162,6 +163,7 @@ public:
   void set_sequence_length(int len);
   char decode_base(int base);
   void set_showbase(int show) { showbase = show; }
+  void set_precise(int p) { precise = p; }
   int get_showbase() { return showbase; }
 };
 

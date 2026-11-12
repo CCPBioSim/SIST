@@ -208,6 +208,8 @@ bool SIDD_4R::Search_Low4RE() {
     cout << "Total Partition Function = " << exp(-scaling_factor) * ZsumB
          << endl;
     cout << "Scaling factor " << scaling_factor << endl;
+    if (precise)
+      cout << "ln Partition Function = " << log(ZsumB) - scaling_factor << endl;
 
     cout << "Number of M_runs = " << runs[0] / ZsumB << endl;
     cout << "Number of Z_runs = " << runs[1] / ZsumB << endl;
@@ -289,6 +291,21 @@ bool SIDD_4R::Search_Low4RE() {
     cout << "Prob_M = " << Prob[0] / ZsumB << endl;
     cout << "Prob_Z = " << Prob[1] / ZsumB << endl;
     cout << "Prob_C = " << Prob[2] / ZsumB << endl;
+    if (precise) {
+      const char names[] = "MZC";
+      for (int t1 = 0; t1 <= Ns; t1++) {
+        for (int t2 = 0; t2 <= Ns; t2++) {
+          if (t1 == t2)
+            continue;
+          cout << "Joint probability " << names[t1] << " " << names[t2] << " = "
+               << Prob_compete[t1][t2] / ZsumB << endl;
+          cout << "Conditional probability " << names[t1] << " given "
+               << names[t2] << " = " << Prob_conditional[t1][t2] << endl;
+          cout << "Conditional probability " << names[t1] << " given not "
+               << names[t2] << " = " << Prob_conditional_not[t1][t2] << endl;
+        }
+      }
+    }
   }
 
   flag_minE4 = 0;

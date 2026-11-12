@@ -116,6 +116,7 @@ protected:
   double minGx;
   int showbase;
   int results;
+  int precise; // print values at full precision
 
 private:
   void set_K();
@@ -181,6 +182,7 @@ public:
   void set_sequence_length(int len);
   char decode_base(int base);
   void set_showbase(int show) { showbase = show; }
+  void set_precise(int p) { precise = p; }
   int get_showbase() { return showbase; }
 };
 

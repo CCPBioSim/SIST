@@ -12,6 +12,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "SIDD_4R.h"
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdlib.h>
@@ -70,6 +71,7 @@ options:\n\
   -b        include base in result file\n\
   -p        print algorithm parameters\n\
   -r        print ensemble average results\n\
+  -P        print values at full precision, with the log partition function\n\
  ";
 
 int main(int argc, char *argv[]) {
@@ -90,6 +92,7 @@ int main(int argc, char *argv[]) {
   int verbose = 0;
   int showpar = 0;
   int showres = 0;
+  int precise = 0;
   int showbase = 0;
   double salt_conc = 0.01;
   double temperature = 310.00;
@@ -97,7 +100,7 @@ int main(int argc, char *argv[]) {
   double threshold = 12;
   int usefile = 0;
   // option processing
-  while ((c = getopt(argc, argv, "hcfnbvpraietTZCXsm:")) != -1) {
+  while ((c = getopt(argc, argv, "hcfnbvpPraietTZCXsm:")) != -1) {
     switch (c) {
     case 'c':
       mt = Circular;
@@ -132,6 +135,9 @@ int main(int argc, char *argv[]) {
     case 'r':
       showres = 1;
       break;
+    case 'P':
+      precise = 1;
+      break;
     case 'T':
       temperature = atof(argv[optind++]);
       break;
@@ -161,6 +167,9 @@ int main(int argc, char *argv[]) {
   sidd.set_EnergyType(et);
   sidd.set_threshold(threshold);
   sidd.set_showres(showres);
+  sidd.set_precise(precise);
+  if (precise)
+    cout << setprecision(17);
   sidd.set_cruciform_string(cruciform_string.str().c_str());
   sidd.set_showbase(showbase);
 
