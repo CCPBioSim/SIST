@@ -8,10 +8,39 @@ from pathlib import Path
 
 
 class BinaryLocator:
-    """Locates the compiled qsidd binaries, for either trans_three or trans_compete."""
+    """Locates the compiled qsidd binaries, for either trans_three or trans_compete.
+
+    Attributes:
+        ENGINES: For each engine, the environment variable that overrides its
+            path and its path inside an installed SIST.
+    """
 
     TRANS_THREE_ENV_VAR = "SIST_TRANS_THREE_BIN"
     TRANS_COMPETE_ENV_VAR = "SIST_TRANS_COMPETE_BIN"
+
+    ENGINES: dict[str, tuple[str, str]] = {
+        "trans_three": (TRANS_THREE_ENV_VAR, "libexec/sist/src/trans_three/qsidd"),
+        "trans_compete": (
+            TRANS_COMPETE_ENV_VAR,
+            "libexec/sist/src/trans_compete/qsidd",
+        ),
+    }
+
+    def binary(self, engine: str) -> Path:
+        """Locate the qsidd binary for an engine.
+
+        Args:
+            engine: ``"trans_three"`` or ``"trans_compete"``.
+
+        Returns:
+            Path to the qsidd executable.
+
+        Raises:
+            KeyError: If the engine is not known.
+        """
+        env_var, installed_relative_path = self.ENGINES[engine]
+
+        return self._resolve(env_var, installed_relative_path)
 
     def trans_three_binary(self) -> Path:
         """Locate the melting/Z-DNA/cruciform qsidd binary.
@@ -19,9 +48,7 @@ class BinaryLocator:
         Returns:
             Path to the trans_three qsidd executable.
         """
-        return self._resolve(
-            self.TRANS_THREE_ENV_VAR, "libexec/sist/src/trans_three/qsidd"
-        )
+        return self.binary("trans_three")
 
     def trans_compete_binary(self) -> Path:
         """Locate the competition qsidd binary.
@@ -29,9 +56,7 @@ class BinaryLocator:
         Returns:
             Path to the trans_compete qsidd executable.
         """
-        return self._resolve(
-            self.TRANS_COMPETE_ENV_VAR, "libexec/sist/src/trans_compete/qsidd"
-        )
+        return self.binary("trans_compete")
 
     @staticmethod
     def _resolve(env_var: str, installed_relative_path: str) -> Path:

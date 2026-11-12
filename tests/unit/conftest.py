@@ -19,7 +19,7 @@ def _base_result(algorithm: str, transitions: list[str]) -> dict[str, Any]:
         transitions: Transitions the algorithm calculates.
 
     Returns:
-        A result with everything except the summary and profile filled in.
+        A result with everything except the summary and transitions filled in.
     """
     return {
         "schema_version": "1.0.0",
@@ -43,6 +43,7 @@ def _base_result(algorithm: str, transitions: list[str]) -> dict[str, Any]:
             "sequence_file": "sequence.fa",
             "sequence_name": None,
             "sequence_length_bp": len(SEQUENCE),
+            "analysed_sequence": SEQUENCE,
             "sequence_sha256": SEQUENCE_SHA256,
             "molecule_type": "linear",
         },
@@ -56,9 +57,6 @@ def _base_result(algorithm: str, transitions: list[str]) -> dict[str, Any]:
         "derived_parameters": {
             "linking_difference_turns": -25.448076923076918,
             "torsional_stiffness_kcal_bp_per_rad2": 3.6,
-            "nucleation_energy_kcal_per_mol": {
-                transition: 10.84 for transition in transitions
-            },
             "bat_kcal_per_mol": 0.2581156634002174,
             "bgc_kcal_per_mol": 1.3048755414539936,
         },
@@ -67,11 +65,10 @@ def _base_result(algorithm: str, transitions: list[str]) -> dict[str, Any]:
     }
 
 
-def _summary(transitions: list[str], partition_function: float) -> dict[str, Any]:
-    """Build a summary with the same averages for every transition.
+def _summary(partition_function: float) -> dict[str, Any]:
+    """Build a whole-molecule summary.
 
     Args:
-        transitions: Transitions to summarise.
         partition_function: Partition function to record.
 
     Returns:
@@ -85,14 +82,24 @@ def _summary(transitions: list[str], partition_function: float) -> dict[str, Any
             "by_number_of_runs": [10652, 4908539, 2873551, 0],
             "total": 7792742,
         },
-        "transitions": {
-            transition: {
-                "probability": 0.7,
-                "expected_runs": 1.02,
-                "expected_transformed_bp": 24.7,
-            }
-            for transition in transitions
-        },
+    }
+
+
+def _transition_result(probability: list[float]) -> dict[str, Any]:
+    """Build the results for one transition.
+
+    Args:
+        probability: Per-position probabilities, one per base pair.
+
+    Returns:
+        The transition's results.
+    """
+    return {
+        "nucleation_energy_kcal_per_mol": 10.84,
+        "probability": 0.7,
+        "expected_runs": 1.02,
+        "expected_transformed_bp": 24.7,
+        "profile": {"probability": probability},
     }
 
 
@@ -100,13 +107,11 @@ def _summary(transitions: list[str], partition_function: float) -> dict[str, Any
 def melting_result() -> dict[str, Any]:
     """A valid melting (M) result for a 5 bp sequence."""
     result = _base_result("M", ["melting"])
+    melting = _transition_result([2.4e-07, 3.3e-07, 0.0, 5.2e-07, 5.9e-07])
+    melting["profile"]["free_energy_kcal_per_mol"] = [11.06, 11.08, None, 11.03, 11.04]
 
-    result["summary"] = _summary(["melting"], 2.22693e-60)
-    result["profile"] = {
-        "base": SEQUENCE,
-        "probability": {"melting": [2.4e-07, 3.3e-07, 0.0, 5.2e-07, 5.9e-07]},
-        "free_energy_kcal_per_mol": {"melting": [11.06, 11.08, None, 11.03, 11.04]},
-    }
+    result["summary"] = _summary(2.22693e-60)
+    result["transitions"] = {"melting": melting}
 
     return result
 
@@ -116,7 +121,8 @@ def competition_result() -> dict[str, Any]:
     """A valid competition (A) result for a 5 bp sequence."""
     transitions = ["melting", "z_dna", "cruciform"]
     result = _base_result("A", transitions)
-    result["summary"] = _summary(transitions, 1.4748e-54)
+
+    result["summary"] = _summary(1.4748e-54)
     result["summary"]["pairwise"] = {
         name: {
             first: {second: 0.69 for second in transitions if second != first}
@@ -128,12 +134,9 @@ def competition_result() -> dict[str, Any]:
             "conditional_probability_given_absent",
         )
     }
-    result["profile"] = {
-        "base": SEQUENCE,
-        "probability": {
-            transition: [6.6e-08, 8.1e-08, 6.4e-08, 1.0e-07, 9.8e-08]
-            for transition in transitions
-        },
+    result["transitions"] = {
+        transition: _transition_result([6.6e-08, 8.1e-08, 6.4e-08, 1.0e-07, 9.8e-08])
+        for transition in transitions
     }
     result["inverted_repeats"] = [
         {"start": 2, "length_bp": 3, "energy_kcal_per_mol": 17.27}
@@ -151,7 +154,7 @@ def failed_result() -> dict[str, Any]:
     result["status"] = "failed"
     result["derived_parameters"] = None
     result["summary"] = None
-    result["profile"] = None
+    result["transitions"] = None
     result["error"] = {
         "code": "irf_not_found",
         "message": "The irf executable was not found on PATH.",
