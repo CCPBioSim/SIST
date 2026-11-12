@@ -1,0 +1,74 @@
+DNA sequence file: fragment.fa
+WARNING: sequence length is too short
+Sequence Length = 20
+Copolymeric melting energetics
+Molecule type: linear DNA
+Stress Level = -0.059999999999999998
+linking difference = -0.40384615384615385 turns
+Threshold = 12 kcal/mol
+Temperature = 310 K
+Salt Concentration = 0.01 M
+K = 3.6000000000000001 kcal-bp/rad^2
+Melting nucleation energy = 10.84 kcal/mol
+Z-DNA nucleation energy = 10 kcal/mol
+Cruciform nucleation energy = 12.150009109596439 kcal/mol
+BAT = 0.25811566340021741 kcal/mol; BGC = 1.3048755414539936 kcal/mol
+MinE = 1.5931626390532545 kcal/mol; Max_E = 13.593162639053254 kcal/mol
+Number of one-run states = 117
+Number of two-run states = 0
+Number of three-run states = 0
+Number of four-run states = 0
+Total number of states = 117
+Total Partition Function = 0.075308195391646654
+Scaling factor 300
+ln Partition Function = -2.5861663135560775
+Number of M_runs = 2.3254944476833412e-06
+Number of Z_runs = 0
+Number of C_runs = 0
+Average number of runs = 2.3254944476833412e-06
+Prob_M = 2.3254944476833412e-06
+Prob_Z = 0
+Prob_C = 0
+Joint probability M Z = 0
+Conditional probability M given Z = -nan
+Conditional probability M given not Z = 2.3254944476833412e-06
+Joint probability M C = 0
+Conditional probability M given C = -nan
+Conditional probability M given not C = 2.3254944476833412e-06
+Joint probability Z M = 0
+Conditional probability Z given M = 0
+Conditional probability Z given not M = 0
+Joint probability Z C = 0
+Conditional probability Z given C = -nan
+Conditional probability Z given not C = 0
+Joint probability C M = 0
+Conditional probability C given M = 0
+Conditional probability C given not M = 0
+Joint probability C Z = 0
+Conditional probability C given Z = -nan
+Conditional probability C given not Z = 0
+N_Melting = 3.973309811615764e-06
+N_Z = 0
+N_Cruciform = 0
+Run time = 0 sec
+Position	Base	P_melt	P_Z	P_cruciform
+1	T	1.7943769227335756e-07	0	0
+2	T	1.9299982650029421e-07	0	0
+3	C	7.4619322404720301e-08	0	0
+4	T	1.2841391991155851e-07	0	0
+5	C	7.4619322404720301e-08	0	0
+6	A	2.0976271300214558e-07	0	0
+7	T	2.2652559950399694e-07	0	0
+8	G	1.2170722963535973e-07	0	0
+9	T	3.0390518981523601e-07	0	0
+10	T	3.6524782921337266e-07	0	0
+11	T	2.8714230331338467e-07	0	0
+12	G	9.1382208906571691e-08	0	0
+13	A	1.2453907234073486e-07	0	0
+14	C	5.0738321141446112e-08	0	0
+15	A	9.4214051611946813e-08	0	0
+16	G	2.3451634817975627e-08	0	0
+17	C	4.733263608124981e-08	0	0
+18	T	2.5037326311908279e-07	0	0
+19	T	3.2527803674415601e-07	0	0
+20	A	2.5037326311908279e-07	0	0
