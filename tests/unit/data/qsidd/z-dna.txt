@@ -1,0 +1,46 @@
+DNA sequence file: fragment.fa
+WARNING: sequence length is too short
+Sequence Length = 20
+Transition: Z-DNA
+Molecule type: linear DNA
+Stress Level = -0.059999999999999998
+linking difference = -0.40384615384615385 TURNS
+Threshold = 12 kcal/mol
+Temperature = 310 K
+Salt Concentration = 0.01 M
+C = 3.6000000000000001 kcal-bp/rad^2
+Nucleation energy = 10 kcal/mol
+MinE = 1.5931626390532545 kcal/mol; Max_E = 13.593162639053254 kcal/mol
+Number of one-run states = 0
+Number of two-run states = 0
+Number of three-run states = 0
+Number of four-run states = 0
+Total number of states = 0
+Total Partition Function = 0.075308020262856407
+Scaling factor 300
+ln Partition Function = -2.5861686390532554
+Average number of runs = 0
+Transition Probability = 0
+Number of Z-DNA bases = 0
+Run time = 0 sec
+Position	Base	P(x)
+1	T	0
+2	T	0
+3	C	0
+4	T	0
+5	C	0
+6	A	0
+7	T	0
+8	G	0
+9	T	0
+10	T	0
+11	T	0
+12	G	0
+13	A	0
+14	C	0
+15	A	0
+16	G	0
+17	C	0
+18	T	0
+19	T	0
+20	A	0

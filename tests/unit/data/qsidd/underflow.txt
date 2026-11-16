@@ -1,0 +1,32 @@
+DNA sequence file: pbr322.toy.fa
+WARNING: superhelical density is outside of physiological range
+Sequence Length = 4361
+Transition: Melting - copolymeric energetics
+Molecule type: linear DNA
+Stress Level = -0.29999999999999999
+linking difference = -127.24038461538461 TURNS
+Threshold = 12 kcal/mol
+Temperature = 310 K
+Salt Concentration = 0.01 M
+C = 3.6000000000000001 kcal-bp/rad^2
+Nucleation energy = 10.84 kcal/mol
+BAT = 0.25811566340021741 kcal/mol; BGC = 1.3048755414539936 kcal/mol
+MinE = 1239.0152081215717 kcal/mol; Max_E = 1251.0152081215717 kcal/mol
+Number of one-run states = 611
+Number of two-run states = 2609265
+Number of three-run states = 0
+Number of four-run states = 0
+Total number of states = 2609876
+Total Partition Function = 0
+Scaling factor 300
+ln Partition Function = -inf
+Average number of runs = -nan
+Transition Probability = -nan
+Number of melted bases = 4411
+Run time = 0 sec
+Position	Base	P(x)	G(x)
+1	T	1	12
+2	T	1	12
+3	C	1	12
+4	T	1	12
+5	C	1	12

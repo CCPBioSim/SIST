@@ -76,26 +76,13 @@ regardless of which implementation produced them.
 
 ## Scientific regression comparison
 
-The regression suite compares deterministic scientific output against these references with zero relative and absolute tolerance.
+Each calculation is run twice on `pbr322.toy.fa`: once with text output and once with a structured JSON result.
 
-For individual transition calculations, the comparison includes:
-
-- Reported deterministic scientific metrics.
-- Every sequence position.
-- The base reported at every position.
-- P(x) at every position.
-- G(x) where it is produced by the calculation.
-
-For the competition calculation, the comparison includes:
-
-- Reported deterministic scientific metrics.
-- Every sequence position.
-- The base reported at every position.
-- P_melt, P_Z, and P_cruciform at every position.
-
-The structure of the scientific profile output is also checked so that unexpected changes to the reported columns cause the regression tests to fail.
+The text output must match its reference line for line, with zero tolerance. That covers every reported metric, every sequence position and base, P(x) or P_melt, P_Z and P_cruciform at every position, G(x) where the calculation produces it, and the layout of the output.
 
 The variable Run time line is deliberately ignored because execution time is not scientific output.
+
+The JSON result must hold the same bases, per-position probabilities, G(x) and total state count. The references print 6 significant figures while the JSON holds full precision, so its values are compared to that precision.
 
 ## Historical competition output
 

@@ -1,7 +1,22 @@
 """The structural transitions and algorithms SIST can calculate.
 
-Each transition records what qsidd calls its values. Each algorithm records the
-transitions it calculates, and the qsidd binary and flags that run it.
+There are three transitions (melting, Z-DNA and cruciform) and four algorithms,
+one for each ``-a`` flag:
+
+>>> ALGORITHMS["Z"].transition_names
+('z_dna',)
+>>> ALGORITHMS["A"].transition_names
+('melting', 'z_dna', 'cruciform')
+>>> ALGORITHMS["A"].engine
+'trans_compete'
+
+Each transition also records the names qsidd prints its values under, which
+differ between qsidd's two output layouts:
+
+>>> MELTING.names(competition=False).probability
+'Transition Probability'
+>>> MELTING.names(competition=True).probability
+'Prob_M'
 """
 
 from __future__ import annotations
@@ -14,15 +29,22 @@ class QsiddNames:
     """What qsidd calls one transition's values in one of its output layouts.
 
     qsidd has two layouts: one for a single transition (``trans_three``) and
-    one for competition between transitions (``trans_compete``).
+    one for competition between transitions (``trans_compete``). Each name is
+    the text qsidd prints before the ``=``, or the column heading in its
+    per-position table. For melting in the competition layout, qsidd prints
+    ``Prob_M = 0.703`` and a ``P_melt`` column.
 
     Attributes:
-        probability: Name of the probability of at least one run.
-        expected_runs: Name of the expected number of runs.
+        probability: Name of the probability of at least one run, such as
+            ``"Prob_M"``.
+        expected_runs: Name of the expected number of runs, such as
+            ``"Number of M_runs"``.
         expected_transformed_bp: Name of the expected number of base pairs in
-            the transition.
-        nucleation_energy: Name of the nucleation energy.
-        profile_column: Heading of the per-position probability column.
+            the transition, such as ``"N_Melting"``.
+        nucleation_energy: Name of the nucleation energy, such as
+            ``"Melting nucleation energy"``.
+        profile_column: Heading of the per-position probability column, such
+            as ``"P_melt"``.
     """
 
     probability: str
@@ -37,10 +59,12 @@ class Transition:
     """A structural transition SIST can calculate.
 
     Attributes:
-        name: Name used in results, such as ``"z_dna"``.
-        letter: Letter qsidd uses for the transition in competition output.
+        name: Name used as the key in results, such as ``"z_dna"`` in
+            ``result["transitions"]["z_dna"]``.
+        letter: Letter qsidd uses for the transition in competition output,
+            such as ``"Z"`` in ``Prob_Z`` and ``Joint probability M Z``.
         needs_inverted_repeats: Whether the IR finder must score candidate
-            inverted repeats before qsidd runs.
+            inverted repeats before qsidd runs. Only cruciform needs them.
         single: What qsidd calls the values when this is the only transition.
         competition: What qsidd calls the values in competition output.
     """
@@ -55,10 +79,11 @@ class Transition:
         """Choose the names for one of qsidd's output layouts.
 
         Args:
-            competition: Whether qsidd ran in competition mode.
+            competition: Whether qsidd ran in competition mode, which is
+                :attr:`Algorithm.competition` for the algorithm being read.
 
         Returns:
-            What qsidd calls this transition's values in that layout.
+            :attr:`competition` if True, otherwise :attr:`single`.
         """
         return self.competition if competition else self.single
 
@@ -73,8 +98,11 @@ class Algorithm:
             reports them.
         engine: qsidd binary that runs it, ``"trans_three"`` or
             ``"trans_compete"``.
-        qsidd_flags: Extra flags that pick the transition in the engine.
-        supports_nearest_neighbor: Whether ``-n`` is passed on to qsidd.
+        qsidd_flags: Extra flags that pick the transition in the engine:
+            ``("-Z",)`` for Z-DNA, ``("-C",)`` for cruciform, and none for
+            melting and competition.
+        supports_nearest_neighbor: Whether ``-n`` is passed on to qsidd. True
+            for the algorithms that include melting.
     """
 
     flag: str
@@ -85,17 +113,27 @@ class Algorithm:
 
     @property
     def transition_names(self) -> tuple[str, ...]:
-        """Names of the transitions the algorithm calculates."""
+        """Names of the transitions the algorithm calculates, such as ``("melting",)``.
+
+        These are the values written to ``calculation.transitions`` in a result.
+        """
         return tuple(transition.name for transition in self.transitions)
 
     @property
     def competition(self) -> bool:
-        """Whether qsidd runs in competition mode, with its competition layout."""
+        """Whether the algorithm calculates more than one transition.
+
+        When True, qsidd prints its competition layout, with ``Prob_M``-style
+        names and pairwise probabilities.
+        """
         return len(self.transitions) > 1
 
     @property
     def needs_inverted_repeats(self) -> bool:
-        """Whether the IR finder must run before qsidd."""
+        """Whether any of its transitions need the IR finder to run before qsidd.
+
+        When True, qsidd is given the scored inverted repeats with ``-X``.
+        """
         return any(transition.needs_inverted_repeats for transition in self.transitions)
 
 

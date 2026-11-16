@@ -11,19 +11,43 @@ import pytest
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
-SIST_TRANSITIONS = (
-    pytest.param(("melting", "M"), id="melting"),
-    pytest.param(("z-dna", "Z"), id="z-dna"),
-    pytest.param(("cruciform", "C"), id="cruciform"),
+REGRESSION_DATA = Path(__file__).resolve().parent / "data" / "pbr322.toy.fa"
+
+
+@dataclass(frozen=True)
+class RegressionCase:
+    """One algorithm run on the regression sequence.
+
+    Attributes:
+        name: Name used in test ids and output file names.
+        algorithm: The ``-a`` flag.
+        reference: File name of its 1.0.0 text reference.
+    """
+
+    name: str
+    algorithm: str
+    reference: str
+
+
+REGRESSION_CASES = (
+    RegressionCase("melting", "M", "melting.txt"),
+    RegressionCase("z-dna", "Z", "z-dna.txt"),
+    RegressionCase("cruciform", "C", "cruciform.txt"),
+    RegressionCase("competition", "A", "competition.rebuilt.txt"),
 )
 
 
 @dataclass(frozen=True)
 class SistRun:
-    """Result of running a SIST calculation."""
+    """Result of running a SIST calculation.
 
-    name: str
-    algorithm: str
+    Attributes:
+        case: The algorithm that was run.
+        process: The finished ``sist`` process.
+        output_path: The file it wrote.
+    """
+
+    case: RegressionCase
     process: subprocess.CompletedProcess[str]
     output_path: Path
 
@@ -161,79 +185,84 @@ def sist_command(
     return [sys.executable, "-m", "sist"]
 
 
-def run_sist_calculation(
+def run_sist(
     sist_command: list[str],
     tmp_path_factory: pytest.TempPathFactory,
+    case: RegressionCase,
     *,
-    name: str,
-    algorithm: str,
+    output_flag: str,
+    output_name: str,
 ) -> SistRun:
-    """Run one SIST calculation using the regression test sequence."""
+    """Run one SIST calculation on the regression sequence.
 
-    runtime_directory = tmp_path_factory.mktemp(f"sist-{name}")
+    Args:
+        sist_command: The SIST command under test.
+        tmp_path_factory: Factory for the run's working directory.
+        case: The algorithm to run.
+        output_flag: ``"-o"`` for text output or ``"--json"`` for a result.
+        output_name: File name to write.
 
-    source_input = Path(__file__).resolve().parent / "data" / "pbr322.toy.fa"
-    runtime_input = runtime_directory / "pbr322.toy.fa"
+    Returns:
+        The finished run.
+    """
+    runtime_directory = tmp_path_factory.mktemp(f"sist-{case.name}")
+    shutil.copy2(REGRESSION_DATA, runtime_directory)
 
-    shutil.copy2(source_input, runtime_input)
-
-    output_path = runtime_directory / f"{name}.txt"
-
-    result = run_command(
+    process = run_command(
         [
             *sist_command,
             "-f",
-            runtime_input.name,
+            REGRESSION_DATA.name,
             "-a",
-            algorithm,
-            "-o",
-            output_path.name,
+            case.algorithm,
             "-b",
             "-p",
             "-r",
+            output_flag,
+            output_name,
         ],
         cwd=runtime_directory,
     )
+    require_success(process, description=f"The {case.name} calculation")
 
-    return SistRun(
-        name=name,
-        algorithm=algorithm,
-        process=result,
-        output_path=output_path,
+    return SistRun(case, process, runtime_directory / output_name)
+
+
+@pytest.fixture(scope="session", params=REGRESSION_CASES, ids=lambda case: case.name)
+def regression_case(request: pytest.FixtureRequest) -> RegressionCase:
+    """Each algorithm, run once per session."""
+    case: RegressionCase = request.param
+
+    return case
+
+
+@pytest.fixture(scope="session")
+def text_run(
+    regression_case: RegressionCase,
+    sist_command: list[str],
+    tmp_path_factory: pytest.TempPathFactory,
+) -> SistRun:
+    """Run an algorithm with text output, as the 1.0.0 references were made."""
+    return run_sist(
+        sist_command,
+        tmp_path_factory,
+        regression_case,
+        output_flag="-o",
+        output_name=f"{regression_case.name}.txt",
     )
 
 
 @pytest.fixture(scope="session")
-def competition_run(
+def json_run(
+    regression_case: RegressionCase,
     sist_command: list[str],
     tmp_path_factory: pytest.TempPathFactory,
 ) -> SistRun:
-    """Run the SIST competition calculation once."""
-
-    return run_sist_calculation(
+    """Run an algorithm with a structured JSON result."""
+    return run_sist(
         sist_command,
         tmp_path_factory,
-        name="competition",
-        algorithm="A",
-    )
-
-
-@pytest.fixture(
-    scope="session",
-    params=SIST_TRANSITIONS,
-)
-def transition_run(
-    request: pytest.FixtureRequest,
-    sist_command: list[str],
-    tmp_path_factory: pytest.TempPathFactory,
-) -> SistRun:
-    """Run each supported individual SIST transition calculation once."""
-
-    name, algorithm = request.param
-
-    return run_sist_calculation(
-        sist_command,
-        tmp_path_factory,
-        name=name,
-        algorithm=algorithm,
+        regression_case,
+        output_flag="--json",
+        output_name=f"{regression_case.name}.json",
     )
