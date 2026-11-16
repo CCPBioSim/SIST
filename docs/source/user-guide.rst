@@ -146,6 +146,9 @@ Command-line options
      - Include ensemble-average results in the output.
    * - ``-o FILE``
      - Write the selected SIST output to ``FILE``.
+   * - ``--json FILE``
+     - Write the result as structured JSON to ``FILE``. See
+       :doc:`result-format`.
 
 .. note::
 
@@ -165,6 +168,21 @@ With ``-o FILE``, the selected output is written to the specified file:
 The exact output sections depend on the calculation mode and selected options.
 The ``-b``, ``-p``, and ``-r`` options add base-pair, parameter, and
 ensemble-average information respectively.
+
+With ``--json FILE``, the full result is written to ``FILE`` as JSON instead,
+whatever ``-b``, ``-p`` and ``-r`` are set to. The text output is then only
+written if ``-o`` is also given:
+
+.. code-block:: bash
+
+   sist -a M -f sequence.fa --json melting.json
+
+The layout of the JSON file is described in :doc:`result-format`. To check a
+JSON result, run:
+
+.. code-block:: bash
+
+   sist-validate melting.json
 
 IRF may print progress information while cruciform or competition calculations
 are running.
