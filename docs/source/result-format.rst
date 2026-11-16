@@ -26,12 +26,62 @@ numbers can have more digits than the text output.
 If the run fails, a result is still written, with ``"status": "failed"`` and
 the reason in ``error``. See `Failed runs`_.
 
-Schema
-------
+Files
+-----
 
-The JSON schema is :download:`sist-result-v1.schema.json
-<../../src/sist/schemas/sist-result-v1.schema.json>`. It ships inside the
-``sist`` package as ``sist/schemas/sist-result-v1.schema.json``.
+* The JSON schema, :download:`sist-result-v1.schema.json
+  <../../src/sist/schemas/sist-result-v1.schema.json>`. It ships inside the
+  ``sist`` package as ``sist/schemas/sist-result-v1.schema.json``.
+* Example results:
+
+  .. list-table::
+     :header-rows: 1
+     :widths: 45 55
+
+     * - File
+       - Shows
+     * - :download:`melting.json <_static/examples/results/melting.json>`
+       - Melting, with G(x)
+     * - :download:`z-dna.json <_static/examples/results/z-dna.json>`
+       - Z-DNA
+     * - :download:`cruciform.json <_static/examples/results/cruciform.json>`
+       - Cruciform, with the scored inverted repeats
+     * - :download:`competition.json <_static/examples/results/competition.json>`
+       - Competition, with pairwise probabilities
+     * - :download:`competition-no-inverted-repeats.json
+         <_static/examples/results/competition-no-inverted-repeats.json>`
+       - Competition on a sequence with no inverted repeats, so some pairwise
+         probabilities are ``null``
+     * - :download:`melting-with-warnings.json
+         <_static/examples/results/melting-with-warnings.json>`
+       - A circular fragment with an ``N`` and a low threshold, which raise
+         warnings
+     * - :download:`melting-failed-underflow.json
+         <_static/examples/results/melting-failed-underflow.json>`
+       - A failed run: the superhelical density is so high that the partition
+         function underflows
+     * - :download:`competition-failed-no-irf.json
+         <_static/examples/results/competition-failed-no-irf.json>`
+       - A failed run: IRF is not installed
+
+The examples were made with these commands, using ``pbr322.toy.fa`` from
+``tests/regression/data`` and two other test sequences:
+
+.. code-block:: bash
+
+   sist -a M -f pbr322.toy.fa --json melting.json
+   sist -a Z -f pbr322.toy.fa --json z-dna.json
+   sist -a C -f pbr322.toy.fa --json cruciform.json
+   sist -a A -f pbr322.toy.fa --json competition.json
+   sist -a A -f aac_repeat.fa --json competition-no-inverted-repeats.json
+   sist -a M -f fragment.fa -c -th 8 --json melting-with-warnings.json
+   sist -a M -f pbr322.toy.fa -s 0.3 --json melting-failed-underflow.json
+   sist -a A -f pbr322.toy.fa --json competition-failed-no-irf.json
+
+``aac_repeat.fa`` is 2,000 bp of ``AAC`` repeated. ``fragment.fa`` is the
+first 2,000 bp of ``pbr322.toy.fa``, with position 601 changed to ``N`` and
+the first two lines in lower case. The last command was run without IRF on
+``PATH``.
 
 Validating a result
 -------------------
