@@ -1,11 +1,31 @@
-"""Orchestration that dispatches a SIST calculation to the qsidd binaries.
+"""Run a SIST calculation with the qsidd binaries.
 
-Algorithms that need inverted repeats first score candidates with
-:mod:`sist.ir_finder`. qsidd is then run with the binary and flags
-:mod:`sist.transitions` gives for the algorithm.
+A run goes through these steps:
 
-The text output is written as before. When a JSON file is asked for, qsidd is
-run at full precision and the result is built by :mod:`sist.results`.
+1. Look up the algorithm for the ``-a`` flag in :mod:`sist.transitions`.
+2. For algorithms with cruciforms, score candidate inverted repeats with
+   :mod:`sist.ir_finder`.
+3. Run qsidd with the binary and flags the algorithm gives.
+4. Write or print qsidd's text output, or, with ``--json``, build the
+   structured result with :mod:`sist.results` and write it.
+
+From Python, a run looks like::
+
+    SistRunner(
+        file="seq.fa",
+        algorithm="M",
+        temperature=310,
+        superhelical_density=0.06,
+        salt=0.01,
+        energy_threshold=12,
+        circular=False,
+        nearest_neighbor=False,
+        print_base_pair=False,
+        print_parameters=False,
+        print_ensemble_average=False,
+        output_file=None,
+        json_file="result.json",
+    ).run()
 """
 
 from __future__ import annotations
@@ -30,8 +50,10 @@ class ScoredRepeats:
     """Inverted repeats scored for qsidd, and the IRF version that found them.
 
     Attributes:
-        ir_string: The scored inverted repeats in the form ``qsidd -X`` expects.
-        irf_version: The IRF version, if it could be read.
+        ir_string: The scored inverted repeats in the form ``qsidd -X``
+            expects, such as ``"1,0,10000,|2982,25,17.27,|"``. Each entry is
+            a start position, length and energy, ending in ``|``.
+        irf_version: The IRF version, such as ``"3.09"``, if it could be read.
     """
 
     ir_string: str
@@ -41,13 +63,16 @@ class ScoredRepeats:
 class IRFinderScorer:
     """Score inverted repeats with the IR finder and IRF.
 
+    IRF finds the candidate repeats in the sequence, and :class:`IRFinder`
+    works out the energy of each one as a cruciform.
+
     Attributes:
         temperature: Temperature in kelvin.
         shape: ``"linear"`` or ``"circular"``.
     """
 
     def __init__(self, *, temperature: float, shape: str) -> None:
-        """Set up the scorer.
+        """Set up the scorer with the conditions the energies are worked out at.
 
         Args:
             temperature: Temperature in kelvin.
@@ -60,10 +85,13 @@ class IRFinderScorer:
         """Score the inverted repeats in a sequence file.
 
         Args:
-            file: Path to the sequence file.
+            file: Path to the FASTA sequence file.
 
         Returns:
-            The scored inverted repeats.
+            The scored inverted repeats, and the IRF version that found them.
+
+        Raises:
+            FileNotFoundError: If IRF is not installed.
         """
         finder = IRFinder(temperature=self.temperature, shape=self.shape)
         ir_string = finder.compute_cruciform_energy_string(file)
@@ -72,22 +100,33 @@ class IRFinderScorer:
 
 
 class SubprocessQsidd:
-    """Run qsidd as a subprocess."""
+    """Run qsidd as a subprocess.
+
+    The exit code is returned rather than raised, so the runner can report a
+    failed qsidd run as text or as a structured result.
+    """
 
     def run(self, command: list[str]) -> subprocess.CompletedProcess[str]:
         """Run a qsidd command line and capture its output.
 
         Args:
-            command: The command line to run.
+            command: The command line to run, as built by
+                :meth:`SistRunner._build_command`.
 
         Returns:
-            The finished process, with its output as text.
+            The finished process, with its exit code and its stdout and stderr
+            as text.
         """
         return subprocess.run(command, capture_output=True, text=True, check=False)
 
 
 class SistRunner:
-    """Coordinate a single SIST calculation: build, run, and report on it.
+    """Run one SIST calculation and write or print its output.
+
+    The attributes match the ``sist`` command's options. Text output works as
+    it did before ``--json``: qsidd's output goes to ``output_file``, or to
+    stdout. With ``json_file`` set, a structured result is written instead,
+    and the text output only as well when ``output_file`` is also set.
 
     Attributes:
         file: Path to the input FASTA sequence file.
@@ -129,10 +168,13 @@ class SistRunner:
         qsidd: SubprocessQsidd | None = None,
         result_writer: ResultWriter | None = None,
     ) -> None:
-        """Initialise the runner with a single calculation's configuration.
+        """Set up the runner with one calculation's settings.
 
-        The last three arguments replace how inverted repeats are scored, how
-        qsidd is run and how results are written.
+        The settings are described under the class attributes. The last three
+        arguments set how inverted repeats are scored, how qsidd is run and
+        how results are written. When they are None, an
+        :class:`IRFinderScorer`, a :class:`SubprocessQsidd` and a
+        :class:`ResultWriter` are used.
         """
         self.file = file
         self.algorithm = algorithm
@@ -158,7 +200,10 @@ class SistRunner:
 
     @property
     def shape(self) -> str:
-        """Molecule shape as the qsidd binaries expect it: linear or circular."""
+        """Molecule shape as the IR finder expects it.
+
+        ``"circular"`` for a circular molecule, otherwise ``"linear"``.
+        """
         return "circular" if self.circular else "linear"
 
     def run(self) -> None:
@@ -167,7 +212,8 @@ class SistRunner:
         Without a JSON file this writes qsidd's text output, exactly as before.
         With one, the structured result is written to it, and the text output
         is only written as well if ``output_file`` is set. The text output then
-        comes from a second qsidd run without full precision.
+        comes from a second qsidd run with the flags the user chose, reusing
+        the inverted repeats already scored.
 
         Raises:
             ValueError: If ``algorithm`` is not one of M, Z, C, or A.
@@ -194,10 +240,10 @@ class SistRunner:
         self._write_text(algorithm, repeats)
 
     def _algorithm(self) -> Algorithm:
-        """Look up the algorithm to run.
+        """Look up the algorithm for the ``-a`` flag in :data:`ALGORITHMS`.
 
         Returns:
-            The algorithm.
+            The algorithm, with its transitions, engine and qsidd flags.
 
         Raises:
             ValueError: If the algorithm flag is not known.
@@ -214,6 +260,8 @@ class SistRunner:
 
     def _write_text(self, algorithm: Algorithm, repeats: ScoredRepeats | None) -> None:
         """Run qsidd as usual and write or print its text output.
+
+        The output goes to ``output_file`` if it is set, otherwise to stdout.
 
         Args:
             algorithm: The algorithm to run.
@@ -238,8 +286,12 @@ class SistRunner:
     def _run_json(self, algorithm: Algorithm) -> ScoredRepeats | None:
         """Run qsidd at full precision and write the structured result.
 
-        Turns every failure, including a result that fails validation, into a
-        failed result and writes it before raising the error again.
+        The steps are: read the sequence, score inverted repeats if needed,
+        run qsidd with ``-b -p -r -P``, build the result and check it against
+        the schema. A failure at any step, including a result that fails the
+        check, becomes a failed result. That is written to ``json_file``
+        before the error is raised again. Errors that are not a
+        ``ResultError`` are recorded as ``INTERNAL_ERROR``.
 
         Args:
             algorithm: The algorithm to run.
@@ -294,6 +346,9 @@ class SistRunner:
     def _settings(self, algorithm: Algorithm) -> RunSettings:
         """Collect the settings a structured result records.
 
+        These fill in the ``calculation``, ``input`` and ``parameters``
+        sections of the result.
+
         Args:
             algorithm: The algorithm being run.
 
@@ -313,6 +368,8 @@ class SistRunner:
 
     def _score_for_json(self, algorithm: Algorithm) -> ScoredRepeats | None:
         """Score inverted repeats, reporting a missing IRF as a result error.
+
+        A missing IRF is recorded as ``IRF_NOT_FOUND`` in the failed result.
 
         Args:
             algorithm: The algorithm being run.
@@ -350,7 +407,9 @@ class SistRunner:
             The parsed qsidd output.
 
         Raises:
-            ResultError: If qsidd cannot be found or exits with an error.
+            ResultError: ``QSIDD_NOT_FOUND`` if the binary cannot be found, or
+                ``QSIDD_FAILED`` with qsidd's exit code and stderr if it exits
+                with an error.
         """
         try:
             command = self._build_command(algorithm, repeats, precise=True)
@@ -373,6 +432,14 @@ class SistRunner:
         self, algorithm: Algorithm, repeats: ScoredRepeats | None, *, precise: bool
     ) -> list[str]:
         """Build the qsidd command line for an algorithm.
+
+        The parts come in this order: the binary, the boolean flags, the
+        numeric parameters, the algorithm's own flags, the inverted repeats
+        and the sequence file. For cruciform at full precision on a linear
+        molecule this gives::
+
+            trans_three -b -p -r -P -T 310.0 -s 0.06 -i 0.01 -t 12.0 -C \\
+                -X <repeats> -f seq.fa
 
         Args:
             algorithm: The algorithm to run.
@@ -401,6 +468,11 @@ class SistRunner:
     def _flags(self, algorithm: Algorithm, *, precise: bool) -> list[str]:
         """Build the qsidd boolean flags.
 
+        For a structured result this is always ``-b -p -r -P``. For text output it
+        is whichever of ``-b``, ``-p`` and ``-r`` were asked for. ``-n`` is added
+        when nearest-neighbor energetics were asked for and the algorithm supports
+        them, and ``-c`` for a circular molecule.
+
         Args:
             algorithm: The algorithm being run.
             precise: Ask for every output section at full precision.
@@ -428,7 +500,14 @@ class SistRunner:
         return flags
 
     def _shared_parameters(self) -> list[str]:
-        """Build the qsidd numeric parameter flags shared by every algorithm."""
+        """Build the qsidd numeric parameter flags shared by every algorithm.
+
+        Returns:
+            The temperature, superhelical density, salt concentration and
+            energy threshold, as ``-T``, ``-s``, ``-i`` and ``-t`` with their
+            values, such as ``["-T", "310.0", "-s", "0.06", "-i", "0.01", "-t",
+            "12.0"]``.
+        """
         return [
             "-T",
             str(self.temperature),
