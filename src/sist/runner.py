@@ -13,7 +13,6 @@ from __future__ import annotations
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol
 
 from sist.binaries import BinaryLocator
 from sist.ir_finder import IRFinder
@@ -37,36 +36,6 @@ class ScoredRepeats:
 
     ir_string: str
     irf_version: str | None
-
-
-class InvertedRepeatScorer(Protocol):
-    """Something that scores candidate inverted repeats in a sequence file."""
-
-    def score(self, file: str) -> ScoredRepeats:
-        """Score the inverted repeats in a sequence file.
-
-        Args:
-            file: Path to the sequence file.
-
-        Returns:
-            The scored inverted repeats.
-        """
-        ...
-
-
-class QsiddExecutor(Protocol):
-    """Something that runs a qsidd command line."""
-
-    def run(self, command: list[str]) -> subprocess.CompletedProcess[str]:
-        """Run a qsidd command line.
-
-        Args:
-            command: The command line to run.
-
-        Returns:
-            The finished process, with its output as text.
-        """
-        ...
 
 
 class IRFinderScorer:
@@ -156,8 +125,8 @@ class SistRunner:
         output_file: str | None,
         json_file: str | None = None,
         command: list[str] | None = None,
-        ir_scorer: InvertedRepeatScorer | None = None,
-        qsidd: QsiddExecutor | None = None,
+        ir_scorer: IRFinderScorer | None = None,
+        qsidd: SubprocessQsidd | None = None,
         result_writer: ResultWriter | None = None,
     ) -> None:
         """Initialise the runner with a single calculation's configuration.
