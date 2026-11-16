@@ -1,4 +1,8 @@
-"""Read the input sequence the way qsidd does."""
+"""Read the input sequence the way qsidd does.
+
+:meth:`SequenceInput.read` turns a FASTA file into the bases qsidd will analyse,
+and raises a :class:`ResultError` for input that cannot be analysed.
+"""
 
 from __future__ import annotations
 
@@ -14,12 +18,19 @@ class SequenceInput:
     """The sequence read from the input file, as qsidd will analyse it.
 
     Header lines are skipped, A, C, G, T and N are kept in any case, and every
-    other character is dropped, as qsidd does.
+    other character is dropped, as qsidd does. For a file holding
+    ``">example"`` then ``"acgRNt"``:
+
+    >>> sequence = SequenceInput(name="example", analysed="ACGNT", dropped=1)
+    >>> sequence.bases
+    'ACGGT'
+    >>> sequence.n_positions
+    [4]
 
     Attributes:
         name: The FASTA header without the leading ``>``, or None if the file
             has no header.
-        analysed: The bases qsidd analyses, in upper case.
+        analysed: The bases qsidd analyses, in upper case, with any ``N`` kept.
         dropped: Number of characters dropped that are not A, C, G, T or N.
     """
 
@@ -31,6 +42,9 @@ class SequenceInput:
     def read(cls, path: Path) -> SequenceInput:
         """Read a sequence file the way qsidd does.
 
+        Line breaks and other whitespace are ignored, so a sequence split over
+        many lines is read as one.
+
         Args:
             path: Path to the sequence file.
 
@@ -38,8 +52,9 @@ class SequenceInput:
             The sequence that qsidd will analyse.
 
         Raises:
-            ResultError: If the file does not exist, holds more than one FASTA
-                record, or has no bases to analyse.
+            ResultError: With ``input_not_found`` if the file does not exist,
+                ``multiple_sequences`` if it holds more than one FASTA record,
+                or ``empty_sequence`` if it has no bases to analyse.
         """
         if not path.is_file():
             raise ResultError(
@@ -74,12 +89,20 @@ class SequenceInput:
 
     @property
     def bases(self) -> str:
-        """The analysed sequence with N replaced by G, as qsidd reports it."""
+        """The analysed sequence with N replaced by G, as qsidd reports it.
+
+        This is what qsidd prints in its ``Base`` column, and what is written
+        to ``input.analysed_sequence``.
+        """
         return self.analysed.replace("N", "G")
 
     @property
     def sha256(self) -> str:
-        """SHA-256 of the bases qsidd reports, for comparing results."""
+        """SHA-256 of :attr:`bases`, as 64 lowercase hex characters.
+
+        Written to ``input.sequence_sha256``, for comparing which sequence two
+        results came from.
+        """
         return hashlib.sha256(self.bases.encode("ascii")).hexdigest()
 
     @property

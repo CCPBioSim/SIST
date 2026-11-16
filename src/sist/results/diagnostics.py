@@ -1,7 +1,17 @@
 """Warning and error codes, and the checks that raise warnings.
 
-Each warning code records the part of SIST that raises it, and each error code
-the stage of the run that fails.
+:class:`WarningCode` and :class:`ErrorCode` list every code a result can hold.
+Each warning code knows which part of SIST raises it, and each error code which
+stage of the run fails:
+
+>>> WarningCode.THRESHOLD_TOO_LOW.source
+'qsidd'
+>>> ErrorCode.IRF_NOT_FOUND.stage
+'ir_finder'
+
+The ``check_*`` functions and :func:`qsidd_warnings` return the warnings for the
+input sequence, the run's settings and qsidd's own ``WARNING:`` lines. A run
+that cannot produce a result raises :class:`ResultError`.
 """
 
 from __future__ import annotations
@@ -18,7 +28,11 @@ if TYPE_CHECKING:
 
 
 class WarningCode(StrEnum):
-    """Every warning a result can hold."""
+    """Every warning a result can hold.
+
+    Each member's value is the code written to the result, such as
+    ``"threshold_too_low"``.
+    """
 
     THRESHOLD_TOO_LOW = "threshold_too_low"
     THRESHOLD_TOO_HIGH = "threshold_too_high"
@@ -35,12 +49,19 @@ class WarningCode(StrEnum):
 
     @property
     def source(self) -> str:
-        """Part of SIST that raises this warning."""
+        """Part of SIST that raises this warning.
+
+        One of ``"sist"``, ``"qsidd"`` or ``"ir_finder"``.
+        """
         return WARNING_SOURCES.get(self, "sist")
 
 
 class ErrorCode(StrEnum):
-    """Every reason a run can fail."""
+    """Every reason a run can fail.
+
+    Each member's value is the code written to the result, such as
+    ``"irf_not_found"``.
+    """
 
     INPUT_NOT_FOUND = "input_not_found"
     EMPTY_SEQUENCE = "empty_sequence"
@@ -53,7 +74,10 @@ class ErrorCode(StrEnum):
 
     @property
     def stage(self) -> str:
-        """Step of the run that fails with this code."""
+        """Step of the run that fails with this code.
+
+        Such as ``"input"``, ``"ir_finder"`` or ``"qsidd"``.
+        """
         return ERROR_STAGES[self]
 
 
@@ -92,8 +116,10 @@ QSIDD_WARNINGS: dict[str, WarningCode] = {
         WarningCode.SALT_CONCENTRATION_OUT_OF_RANGE
     ),
 }
-"""qsidd's warning text and its code. qsidd's two sequence length warnings are
-not included. :func:`check_sequence` raises the sequence length warnings."""
+"""qsidd's warning text, after ``WARNING:``, and its code.
+
+qsidd's two sequence length warnings are not included. :func:`check_sequence`
+raises the sequence length warnings."""
 
 MIN_SEQUENCE_LENGTH = 1500
 """Shortest recommended sequence, in base pairs."""
@@ -108,8 +134,10 @@ class ResultWarning:
 
     Attributes:
         code: What kind of warning it is.
-        message: What it means, written for people.
-        details: Extra values about the warning.
+        message: What it means, written for people, such as ``"1 N base(s) in
+            the sequence were analysed as G."``.
+        details: Extra values about the warning, such as
+            ``{"count": 1, "positions": [601]}``.
     """
 
     code: WarningCode
@@ -120,7 +148,8 @@ class ResultWarning:
         """Write the warning in the shape the result schema expects.
 
         Returns:
-            One entry of a result's ``warnings`` list.
+            One entry of a result's ``warnings`` list, with ``code``,
+            ``message`` and ``source``, plus ``details`` when there are any.
         """
         warning: dict[str, Any] = {
             "code": str(self.code),
@@ -137,12 +166,16 @@ class ResultWarning:
 class ResultError(Exception):
     """A run that could not produce a result, and why.
 
+    Raised by the steps of a run, and caught by the runner, which turns it into
+    a failed result with :meth:`to_dict` as its ``error`` section.
+
     Attributes:
-        code: Why the run failed.
+        code: Why the run failed. Its :attr:`ErrorCode.stage` gives the step.
         message: What went wrong, written for people.
         exit_code: Exit code of the failing external program, if any.
         stderr: Standard error of the failing external program, if any.
-        details: Extra values about the error.
+        details: Extra values about the error, such as
+            ``{"records": 2}`` for a file with two FASTA records.
     """
 
     def __init__(
@@ -175,7 +208,9 @@ class ResultError(Exception):
         """Write the error in the shape the result schema expects.
 
         Returns:
-            The ``error`` section of a failed result.
+            The ``error`` section of a failed result, with ``code``,
+            ``message``, ``stage``, ``exit_code`` and ``stderr``, plus
+            ``details`` when there are any.
         """
         error: dict[str, Any] = {
             "code": str(self.code),
@@ -194,11 +229,19 @@ class ResultError(Exception):
 def check_sequence(sequence: SequenceInput) -> list[ResultWarning]:
     """Raise the warnings the input sequence calls for.
 
+    Checks, in order:
+
+    * ``N`` bases, which qsidd analyses as ``G``. The warning lists their
+      1-based positions.
+    * Characters other than A, C, G, T and N, which qsidd drops.
+    * A length below :data:`MIN_SEQUENCE_LENGTH` or above
+      :data:`MAX_SEQUENCE_LENGTH` base pairs.
+
     Args:
         sequence: The sequence qsidd will analyse.
 
     Returns:
-        Warnings about ambiguous bases, dropped characters and the length.
+        A warning for each check that applies, in that order.
     """
     warnings = []
     length = len(sequence.analysed)
@@ -251,13 +294,20 @@ def check_settings(
 ) -> list[ResultWarning]:
     """Raise the warnings for settings the algorithm cannot use as given.
 
+    Checks, in order:
+
+    * Nearest-neighbor energetics asked for with an algorithm that does not
+      include melting.
+    * A salt other than the IR finder's fixed 0.01 M, for an algorithm that
+      scores inverted repeats.
+
     Args:
         algorithm: The algorithm being run.
         nearest_neighbor: Whether nearest-neighbor energetics were asked for.
         salt: Salt concentration in mol/L.
 
     Returns:
-        Warnings about ignored energetics and the fixed cruciform salt.
+        A warning for each check that applies, in that order.
     """
     warnings = []
 
@@ -285,8 +335,13 @@ def check_settings(
 def qsidd_warnings(messages: list[str]) -> list[ResultWarning]:
     """Turn qsidd's warning lines into coded warnings.
 
+    Each line in :data:`QSIDD_WARNINGS` becomes a warning with its code, and its
+    text as the message, capitalised and ending with a full stop. Other lines
+    are skipped.
+
     Args:
-        messages: The text of each ``WARNING:`` line qsidd printed.
+        messages: The text of each ``WARNING:`` line qsidd printed, without
+            the ``WARNING:``, as in :attr:`QsiddOutput.warnings`.
 
     Returns:
         A warning for each line with a known code, in the same order.

@@ -1,4 +1,15 @@
-"""Put the parts of a result together for a successful or failed run."""
+"""Put the parts of a result together for a successful or failed run.
+
+:class:`ResultBuilder` brings together the other parts of :mod:`sist.results`:
+
+- :class:`SequenceInput` reads the input sequence.
+- :mod:`sist.results.diagnostics` checks the sequence, the settings and
+  qsidd's output, and raises warnings.
+- :class:`QsiddReader` reads the values out of the parsed qsidd output.
+- :class:`ProvenanceRecorder` records how, where and when the run was made.
+
+The result it returns is a :class:`Result`, ready for :class:`ResultWriter`.
+"""
 
 from __future__ import annotations
 
@@ -27,11 +38,17 @@ from sist.results.sequence import SequenceInput
 
 
 class ResultBuilder:
-    """Build the result of one run.
+    """Build the result of one run, successful or failed.
 
-    Create one builder when the run starts, which records its start time,
-    then call :meth:`read_sequence` and either :meth:`success` or
-    :meth:`failure`.
+    A run uses one builder from start to finish::
+
+        builder = ResultBuilder(settings, command=argv)
+        sequence = builder.read_sequence()
+        result = builder.success(output, sequence, ir_string=ir_string)
+
+    ``read_sequence`` and ``success`` add warnings to ``warnings`` as they go.
+    If any step raises a ``ResultError``, ``failure`` builds the failed result
+    instead, keeping the warnings and anything already read.
 
     Attributes:
         settings: The run's settings.
@@ -39,11 +56,14 @@ class ResultBuilder:
     """
 
     def __init__(self, settings: RunSettings, *, command: list[str] | None = None):
-        """Start recording a run.
+        """Start recording a run, and its start time.
 
         Args:
-            settings: The run's settings.
-            command: The command line as given, or None when run from Python.
+            settings: The run's settings, which also pick the qsidd binary
+                and how its output is read.
+            command: The command line as given, such as
+                ``["sist", "-a", "M", "-f", "seq.fa", "--json", "out.json"]``,
+                or None when run from Python.
         """
         self.settings = settings
         self.warnings: list[ResultWarning] = []
@@ -55,6 +75,10 @@ class ResultBuilder:
 
     def read_sequence(self) -> SequenceInput:
         """Read the input sequence and raise the warnings it and the settings call for.
+
+        The sequence warnings come first, such as characters dropped or ``N``
+        read as ``G``, then the settings warnings, such as ``-n`` given for an
+        algorithm that ignores it.
 
         Returns:
             The sequence that qsidd will analyse.
@@ -85,16 +109,21 @@ class ResultBuilder:
     ) -> Result:
         """Build the result of a run that finished.
 
-        Records qsidd's warnings, then checks for underflow.
+        Adds qsidd's own warnings, such as an energy threshold that is too
+        low, then checks the partition function did not underflow. For
+        algorithms with cruciforms, the inverted repeats are parsed from
+        ``ir_string``, and a warning is added if there are none.
 
         Args:
-            output: The parsed qsidd output.
+            output: The parsed qsidd output, from a run with ``-b -p -r -P``.
             sequence: The sequence that was analysed.
-            ir_string: The scored inverted repeats passed to qsidd, if used.
-            irf_version: The IRF version, if inverted repeats were scored.
+            ir_string: The scored inverted repeats passed to qsidd with
+                ``-X``, if used.
+            irf_version: The IRF version, such as ``"3.09"``, if inverted
+                repeats were scored.
 
         Returns:
-            The result.
+            The successful result, with every section filled in.
 
         Raises:
             ResultError: If the partition function underflowed to zero.
@@ -148,11 +177,13 @@ class ResultBuilder:
     ) -> Result:
         """Build the result of a run that failed.
 
-        Keeps everything known before the failure, including any derived
-        parameters qsidd printed.
+        Keeps everything known before the failure: the settings, the
+        warnings so far, the input if it was read, and any derived parameters
+        qsidd printed. The summary, transitions and diagnostics are left out,
+        and the error is recorded in their place.
 
         Args:
-            error: Why the run failed.
+            error: Why the run failed, with its code, stage and message.
             sequence: The sequence, if it was read before the failure.
             output: The parsed qsidd output, if qsidd ran.
             irf_version: The IRF version, if IRF ran.
@@ -174,6 +205,9 @@ class ResultBuilder:
         self, output: QsiddOutput | None
     ) -> DerivedParameters | None:
         """Read the derived parameters for a failed run, if they can be read.
+
+        qsidd may have stopped before printing them, or printed only some, in
+        which case None is returned.
 
         Args:
             output: The parsed qsidd output, or None if qsidd did not run.

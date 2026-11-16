@@ -1,7 +1,17 @@
 """The typed SIST result.
 
 Each section of a result is a small dataclass with a ``to_dict`` method that
-writes it in the shape of ``sist-result-v1.schema.json``.
+writes it in the shape of ``sist-result-v1.schema.json``. :class:`Result` holds
+the sections, and its ``to_dict`` writes the whole result:
+
+* :class:`Provenance` writes ``provenance``.
+* :class:`InputDescription` writes ``input``.
+* :class:`RunSettings` writes ``parameters``, with :meth:`RunSettings.parameters`.
+* :class:`DerivedParameters` writes ``derived_parameters``.
+* :class:`Summary` writes ``summary``.
+* :class:`TransitionResult` writes one entry of ``transitions``.
+* :class:`InvertedRepeat` writes one entry of ``inverted_repeats``.
+* :class:`Diagnostics` writes ``diagnostics``.
 """
 
 from __future__ import annotations
@@ -18,12 +28,20 @@ SCHEMA_VERSION = "1.0.0"
 """Version of the result model this package writes."""
 
 PairMatrices = dict[str, dict[str, dict[str, float | None]]]
-"""Pairwise probabilities, read as ``matrices[name][first][second]``."""
+"""Pairwise probabilities, read as ``matrices[name][first][second]``.
+
+``name`` is ``"joint_probability"``, ``"conditional_probability"`` or
+``"conditional_probability_given_absent"``, and ``first`` and ``second`` are
+transition names, such as ``matrices["conditional_probability"]["melting"]
+["z_dna"]`` for P(melting given Z-DNA)."""
 
 
 @dataclass(frozen=True)
 class RunSettings:
     """The settings for one SIST calculation.
+
+    Built by the runner from the command-line options, and used by the builder
+    for the ``parameters`` and ``input`` sections.
 
     Attributes:
         file: Path to the input sequence file, as given.
@@ -53,8 +71,11 @@ class RunSettings:
     def parameters(self) -> dict[str, Any]:
         """Write the settings as the calculation used them.
 
-        The superhelical density is written as negative, as qsidd uses it.
-        Runs that score inverted repeats also record the IR finder's fixed salt.
+        The superhelical density is written as negative, as qsidd uses it, so
+        ``-s 0.06`` is written as ``-0.06``. ``melting_energetics`` is
+        ``"copolymeric"`` or ``"nearest_neighbor"`` when the algorithm includes
+        melting, and None otherwise. Runs that score inverted repeats also
+        record the IR finder's fixed salt as ``cruciform_salt_concentration_m``.
 
         Returns:
             The ``parameters`` section.
@@ -109,7 +130,12 @@ class Provenance:
     wall_time_s: float
 
     def to_dict(self) -> dict[str, Any]:
-        """Write the ``provenance`` section."""
+        """Write the ``provenance`` section.
+
+        The SIST version, git commit, engine and IRF version are grouped under
+        ``software``, and the Python version and platform under
+        ``environment``.
+        """
         return {
             "software": {
                 "name": "SIST",
@@ -153,11 +179,13 @@ class InputDescription:
         """Describe the input, as far as it was read.
 
         Args:
-            settings: The run's settings.
-            sequence: The sequence, or None if it was never read.
+            settings: The run's settings, for the file path and molecule type.
+            sequence: The sequence, or None if the run failed before reading
+                it.
 
         Returns:
-            The input description.
+            The input description. Its name, length, analysed sequence and
+            SHA-256 are None when ``sequence`` is None.
         """
         if sequence is None:
             return cls(settings.file, None, None, None, None, settings.molecule_type)
@@ -172,7 +200,10 @@ class InputDescription:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        """Write the ``input`` section, leaving out a sequence that was never read."""
+        """Write the ``input`` section.
+
+        ``analysed_sequence`` is left out when the sequence was never read.
+        """
         section = asdict(self)
 
         if self.analysed_sequence is None:
@@ -224,7 +255,12 @@ class Summary:
     pairwise: PairMatrices | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Write the ``summary`` section."""
+        """Write the ``summary`` section.
+
+        The state counts are grouped under ``state_counts`` as
+        ``by_number_of_runs`` and ``total``, and ``pairwise`` is only written
+        when there are pairwise probabilities.
+        """
         summary: dict[str, Any] = {
             "ln_partition_function": self.ln_partition_function,
             "partition_function": self.partition_function,
@@ -262,7 +298,11 @@ class TransitionResult:
     free_energy_kcal_per_mol: list[float | None] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Write one entry of the ``transitions`` section."""
+        """Write one entry of the ``transitions`` section.
+
+        The per-position values are grouped under ``profile``, with
+        ``free_energy_kcal_per_mol`` only written when there is G(x).
+        """
         profile: dict[str, Any] = {"probability": self.profile_probability}
 
         if self.free_energy_kcal_per_mol is not None:
@@ -296,7 +336,10 @@ class InvertedRepeat:
         """Read the scored inverted repeats from the string passed to qsidd.
 
         The string is ``start,length,energy,|`` repeated, and starts with a
-        placeholder entry of length 0, which is skipped.
+        placeholder entry of length 0, which is skipped:
+
+        >>> InvertedRepeat.parse_all("1,0,10000,|2982,25,17.27,|")
+        [InvertedRepeat(start=2982, length_bp=25, energy_kcal_per_mol=17.27)]
 
         Args:
             ir_string: The string the IR finder built for ``qsidd -X``.
@@ -336,7 +379,11 @@ class Diagnostics:
     max_energy_kcal_per_mol: float | None
 
     def to_dict(self) -> dict[str, Any]:
-        """Write the ``diagnostics`` section."""
+        """Write the ``diagnostics`` section.
+
+        The lowest and highest state energies are grouped under
+        ``energy_window``.
+        """
         return {
             "scaling_factor": self.scaling_factor,
             "energy_window": {
@@ -349,6 +396,10 @@ class Diagnostics:
 @dataclass(frozen=True)
 class Result:
     """A complete SIST result, successful or failed.
+
+    A successful result has ``summary``, ``transitions`` and ``diagnostics``
+    and no ``error``. A failed result has an ``error``, and keeps whatever was
+    known before the failure, such as ``input`` and ``derived_parameters``.
 
     Attributes:
         provenance: How, where and when it was made.
@@ -383,6 +434,11 @@ class Result:
 
     def to_dict(self) -> dict[str, Any]:
         """Write the result in the shape of ``sist-result-v1.schema.json``.
+
+        ``schema_version`` and ``status`` come first and ``warnings`` and
+        ``error`` last. ``inverted_repeats`` and ``diagnostics`` are only
+        written when they are set. Missing required sections are written as
+        null.
 
         Returns:
             The result, with its sections in the documented order.

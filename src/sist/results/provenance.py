@@ -1,4 +1,13 @@
-"""Record how, where and when a result was made."""
+"""Record how, where and when a result was made.
+
+A :class:`ProvenanceRecorder` is created when a run starts and finished when its
+result is built::
+
+    recorder = ProvenanceRecorder(engine="trans_three", command=["sist", "-a", "M"])
+    provenance = recorder.finish(irf_version=None)
+
+``provenance.wall_time_s`` is then the number of seconds between the two.
+"""
 
 from __future__ import annotations
 
@@ -17,9 +26,12 @@ from sist.results.model import Provenance
 class ProvenanceRecorder:
     """Record a run's provenance, starting the clock when it is created.
 
+    The SIST version, git commit, Python version and platform are read when
+    :meth:`finish` is called.
+
     Attributes:
         GIT_SHA_ENV_VAR: Environment variable that sets the git commit, for
-            builds made outside a git checkout.
+            builds made outside a git checkout, such as a conda package.
         engine: qsidd binary the run uses.
         command: The command line as given, or None when run from Python.
         started_at: When the run started.
@@ -28,11 +40,14 @@ class ProvenanceRecorder:
     GIT_SHA_ENV_VAR = "SIST_GIT_SHA"
 
     def __init__(self, *, engine: str, command: list[str] | None) -> None:
-        """Start the clock for a run.
+        """Start the clock for a run, and record its start time.
 
         Args:
-            engine: qsidd binary the run uses.
-            command: The command line as given, or None when run from Python.
+            engine: qsidd binary the run uses, ``"trans_three"`` or
+                ``"trans_compete"``.
+            command: The command line as given, such as
+                ``["sist", "-a", "M", "-f", "seq.fa"]``, or None when run from
+                Python.
         """
         self.engine = engine
         self.command = command
@@ -44,10 +59,12 @@ class ProvenanceRecorder:
         """Stop the clock and record the provenance.
 
         Args:
-            irf_version: The IRF version, for runs that score inverted repeats.
+            irf_version: The IRF version, such as ``"3.09"``, for runs that
+                score inverted repeats, otherwise None.
 
         Returns:
-            The provenance.
+            The provenance, with the finish time and the elapsed seconds,
+            rounded to milliseconds.
         """
         return Provenance(
             version=sist.__version__,
@@ -64,7 +81,11 @@ class ProvenanceRecorder:
 
     @staticmethod
     def timestamp() -> str:
-        """The current UTC time in RFC 3339 format."""
+        """The current UTC time in RFC 3339 format.
+
+        Returns:
+            The time to the second, such as ``"2026-11-06T10:00:02Z"``.
+        """
         return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     @classmethod

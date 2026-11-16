@@ -1,8 +1,14 @@
 """Turn qsidd's output into result values, for any algorithm.
 
 qsidd prints each value under one name for a single transition and another for
-a competition. The reader looks the names up in :mod:`sist.transitions` for the
-algorithm it was given.
+a competition, such as ``Transition Probability`` or ``Prob_M``.
+:class:`QsiddReader` looks the names up in :mod:`sist.transitions` for the
+algorithm it was given, and returns the typed sections from
+:mod:`sist.results.model`::
+
+    reader = QsiddReader(ALGORITHMS["A"])
+    summary = reader.summary(output)
+    transitions = reader.transitions(output)
 """
 
 from __future__ import annotations
@@ -20,6 +26,9 @@ from sist.transitions import Algorithm, Transition
 
 class QsiddReader:
     """Read result values from the full-precision output of one qsidd run.
+
+    Each method reads one section of a result from a :class:`QsiddOutput`
+    parsed from qsidd run with ``-b -p -r -P``.
 
     Attributes:
         FREE_ENERGY_COLUMN: Heading of qsidd's G(x) column, which it prints for
@@ -40,8 +49,8 @@ class QsiddReader:
     def underflowed(self, output: QsiddOutput) -> bool:
         """Check whether the partition function underflowed to zero.
 
-        qsidd reports this by printing a log of the partition function that is
-        not a finite number.
+        qsidd reports this by printing ``ln Partition Function = -inf``, or
+        another value that is not a finite number.
 
         Args:
             output: The parsed qsidd output.
@@ -54,11 +63,16 @@ class QsiddReader:
     def derived_parameters(self, output: QsiddOutput) -> DerivedParameters:
         """Read the model values qsidd works out from the settings.
 
+        Reads ``linking difference``, the torsional stiffness (printed as ``K``
+        in competition output and ``C`` otherwise), and ``BAT`` and ``BGC``
+        where qsidd prints them.
+
         Args:
             output: The parsed qsidd output.
 
         Returns:
-            The derived parameters.
+            The derived parameters, with ``bat_kcal_per_mol`` and
+            ``bgc_kcal_per_mol`` None for Z-DNA runs.
 
         Raises:
             KeyError: If qsidd did not print them.
@@ -75,11 +89,16 @@ class QsiddReader:
     def summary(self, output: QsiddOutput) -> Summary:
         """Read the whole-molecule results.
 
+        Reads the partition function and its log, the average number of runs,
+        and the state counts for one to four runs and their total. For a
+        competition, also reads the pairwise probabilities.
+
         Args:
             output: The parsed qsidd output.
 
         Returns:
-            The summary.
+            The summary, with ``partition_function`` None if qsidd printed it
+            as 0.
         """
         return Summary(
             ln_partition_function=output.number("ln Partition Function"),
@@ -94,13 +113,14 @@ class QsiddReader:
         )
 
     def transitions(self, output: QsiddOutput) -> dict[str, TransitionResult]:
-        """Read the results for each transition.
+        """Read the results for each transition the algorithm calculates.
 
         Args:
             output: The parsed qsidd output.
 
         Returns:
-            The results, keyed by transition name.
+            The results, keyed by transition name, such as ``"melting"``, in
+            the algorithm's order.
         """
         return {
             transition.name: self._transition(output, transition)
@@ -109,6 +129,8 @@ class QsiddReader:
 
     def diagnostics(self, output: QsiddOutput) -> Diagnostics:
         """Read the values for checking a run.
+
+        Reads ``Scaling factor``, ``MinE`` and ``Max_E``.
 
         Args:
             output: The parsed qsidd output.
@@ -127,8 +149,10 @@ class QsiddReader:
     ) -> TransitionResult:
         """Read the results for one transition.
 
-        G(x) is included when qsidd printed it, with null where the
-        transition's probability is 0.
+        Reads the transition's probability, expected runs, expected base pairs
+        and nucleation energy, and its per-position probability column. G(x) is
+        read from the ``G(x)`` column when qsidd printed one, with null where
+        the transition's probability is 0.
 
         Args:
             output: The parsed qsidd output.
@@ -161,6 +185,13 @@ class QsiddReader:
     def _pairwise(self, output: QsiddOutput) -> PairMatrices:
         """Read the probabilities for pairs of transitions.
 
+        For each pair of different transitions, reads the three lines ``-P``
+        adds to competition output, such as::
+
+            Joint probability M Z = 0.69
+            Conditional probability M given Z = 0.70
+            Conditional probability M given not Z = 0.99
+
         P(a given not b) is null when b is certain. Any value qsidd prints as
         ``nan`` is null.
 
@@ -168,7 +199,8 @@ class QsiddReader:
             output: The parsed qsidd output.
 
         Returns:
-            The joint and conditional probabilities.
+            The joint and conditional probabilities, read as
+            ``matrices[name][first][second]``.
         """
         competition_names = {
             transition.name: transition.names(competition=True)
@@ -215,7 +247,7 @@ class QsiddReader:
 
         Args:
             output: The parsed qsidd output.
-            key: Name of the value.
+            key: Name of the value, such as ``"BAT"``.
 
         Returns:
             The value, or None if qsidd did not print it.
