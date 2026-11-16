@@ -1,9 +1,22 @@
 """Validate structured SIST results.
 
-A result is checked in two passes. The JSON schema checks its shape: types,
-ranges, required keys and allowed names. The cross-checks then compare one part
-of the result with another, such as each per-position array against the
-sequence length.
+A result is checked in two passes:
+
+1. The JSON schema, ``sist-result-v1.schema.json``, checks its shape: types,
+   ranges, required keys and allowed names.
+2. The cross-checks compare one part of the result with another: the
+   transitions against the algorithm, each per-position array against the
+   sequence length, the state counts against their total, and the partition
+   function against its log.
+
+Each problem is reported as a :class:`ValidationIssue`, which prints as its
+path and message::
+
+    for issue in ResultValidator().validate(result):
+        print(issue)
+
+For a melting profile one entry too long, this prints a line starting
+``transitions/melting/profile/probability:``.
 """
 
 from __future__ import annotations
@@ -27,21 +40,29 @@ class ValidationIssue:
     """A single problem found in a SIST result.
 
     Attributes:
-        path: Where the problem is, written as keys joined by ``/``, for example
-            ``"profile/probability/melting"``. Empty for the top level.
-        message: What is wrong.
+        path: Where the problem is, written as keys and list indexes joined by
+            ``/``, for example ``"transitions/melting/profile/probability/2"``.
+            Empty for the top level.
+        message: What is wrong, such as ``"1.5 is greater than the maximum of
+            1"``.
     """
 
     path: str
     message: str
 
     def __str__(self) -> str:
-        """Format the issue as ``path: message``."""
+        """Format the issue as ``path: message``, or ``(top level): message``."""
         return f"{self.path or '(top level)'}: {self.message}"
 
 
 class ResultValidationError(ValueError):
     """Error for a SIST result that fails validation.
+
+    The message lists every problem, one per line::
+
+        2 problem(s) in SIST result:
+          schema_version: '2.0.0' does not match ...
+          input/analysed_sequence: has 6 letters, expected 5
 
     Attributes:
         issues: Every problem found in the result.
@@ -61,6 +82,10 @@ class ResultValidationError(ValueError):
 
 class ResultValidator:
     """Check SIST results against the result schema and the cross-checks.
+
+    :meth:`validate` returns every problem found, and :meth:`check` raises
+    :class:`ResultValidationError` if there are any. One validator can check
+    any number of results.
 
     Attributes:
         SCHEMA_FILE: File name of the schema inside ``sist/schemas``.
@@ -83,6 +108,9 @@ class ResultValidator:
     def load_schema(cls) -> dict[str, Any]:
         """Load the result schema that ships with the package.
 
+        The schema is read from ``sist/schemas/sist-result-v1.schema.json``
+        inside the installed package.
+
         Returns:
             The schema as a dictionary.
         """
@@ -98,14 +126,16 @@ class ResultValidator:
     def validate(self, result: dict[str, Any]) -> list[ValidationIssue]:
         """Find every problem in a result.
 
-        The cross-checks run only when the schema passes. A result that fails
-        the schema reports only the schema problems.
+        The result is checked against the schema first. If the schema passes,
+        the cross-checks run as well. A result that fails the schema reports
+        only the schema problems.
 
         Args:
-            result: A parsed SIST result.
+            result: A parsed SIST result, such as the output of ``json.load``.
 
         Returns:
-            Every problem found. An empty list means the result is valid.
+            Every problem found, schema problems first. An empty list means the
+            result is valid.
         """
         issues = [
             self._schema_issue(error) for error in self._validator.iter_errors(result)
@@ -119,11 +149,14 @@ class ResultValidator:
     def check(self, result: dict[str, Any]) -> None:
         """Raise an error listing every problem in a result.
 
+        Runs :meth:`validate`, and does nothing if it finds no problems.
+
         Args:
             result: A parsed SIST result.
 
         Raises:
-            ResultValidationError: If the result has any problems.
+            ResultValidationError: If the result has any problems. Its
+                ``issues`` attribute holds them all.
         """
         issues = self.validate(result)
 
@@ -135,8 +168,10 @@ class ResultValidator:
         """Turn a schema error into an issue for its deepest underlying error.
 
         For a section with more than one allowed shape, such as ``transitions``
-        (results or null), this follows the error down to the deepest point in
-        the result.
+        (results or null), the schema error holds one inner error per shape.
+        This follows the inner errors down to the one with the longest path in
+        the result, so a bad probability inside ``transitions`` is reported at
+        ``transitions/melting/profile/probability/2``.
 
         Args:
             error: An error from the JSON Schema validator.
@@ -154,14 +189,15 @@ class ResultValidator:
     def _cross_check(self, result: dict[str, Any]) -> list[ValidationIssue]:
         """Run the checks that compare one part of a result with another.
 
-        A failed run gets the timestamp and transition checks. A successful run
-        gets every check.
+        Every result gets the timestamp and transition checks. A successful
+        result also gets the pairwise, length, state count and partition
+        function checks, which read its ``summary`` and ``transitions``.
 
         Args:
             result: A result that has passed the schema.
 
         Returns:
-            Every problem found.
+            Every problem found, in the order the checks run.
         """
         issues = []
 
@@ -180,11 +216,16 @@ class ResultValidator:
     def _check_timestamps(result: dict[str, Any]) -> list[ValidationIssue]:
         """Check that the start and finish times are RFC 3339 date-times.
 
+        Reads ``provenance.started_at`` and ``provenance.finished_at``, and
+        parses each with :meth:`datetime.fromisoformat`. A null time is
+        accepted.
+
         Args:
             result: A result that has passed the schema.
 
         Returns:
-            A problem for each time that is not an RFC 3339 date-time.
+            An issue at ``provenance/started_at`` or ``provenance/finished_at``
+            for each time that does not parse.
         """
         issues = []
         provenance = result["provenance"]
@@ -211,15 +252,20 @@ class ResultValidator:
     def _check_transitions(result: dict[str, Any]) -> list[ValidationIssue]:
         """Check the transitions against the algorithm and the results.
 
-        ``calculation.transitions`` is compared with what the algorithm
-        calculates, and ``transitions`` with ``calculation.transitions``.
+        Two comparisons are made:
+
+        * ``calculation.transitions`` against the transitions the algorithm in
+          ``calculation.algorithm`` calculates, from :data:`ALGORITHMS`.
+        * The keys of ``transitions`` against ``calculation.transitions``. This
+          is skipped for a failed run, where ``transitions`` is null.
 
         Args:
             result: A result that has passed the schema.
 
         Returns:
-            A problem if the transitions do not match the algorithm, and one if
-            the results have extra or missing transitions.
+            An issue at ``calculation/transitions`` if they do not match the
+            algorithm, and issues at ``transitions`` naming any extra or
+            missing transitions.
         """
         issues = []
         calculation = result["calculation"]
@@ -262,13 +308,18 @@ class ResultValidator:
     def _check_pairwise(result: dict[str, Any]) -> list[ValidationIssue]:
         """Check that pairwise probabilities only pair different, known transitions.
 
+        Reads ``summary.pairwise``, if present. Each of its three matrices is
+        read as ``matrix[first][second]``, and every pair is checked against
+        ``calculation.transitions``.
+
         Args:
             result: A successful result that has passed the schema.
 
         Returns:
-            A problem if the calculation has only one transition, and one for
-            each pair that repeats a transition or uses one not in the
-            calculation.
+            One issue at ``summary/pairwise`` if the calculation has only one
+            transition. Otherwise an issue at
+            ``summary/pairwise/<matrix>/<first>/<second>`` for each pair that
+            repeats a transition or names one not in the calculation.
         """
         pairwise = result["summary"].get("pairwise")
 
@@ -307,12 +358,17 @@ class ResultValidator:
     def _check_lengths(result: dict[str, Any]) -> list[ValidationIssue]:
         """Check that every per-position value has one entry per base pair.
 
+        Compares ``input.sequence_length_bp`` with the length of
+        ``input.analysed_sequence`` and of every array in each transition's
+        ``profile``.
+
         Args:
             result: A successful result that has passed the schema.
 
         Returns:
-            A problem for each array, or the analysed sequence, of the wrong
-            length, or a single problem if the sequence length is missing.
+            One issue at ``input/sequence_length_bp`` if the length is null.
+            Otherwise an issue for each value of the wrong length, giving its
+            length and the expected one.
         """
         length = result["input"]["sequence_length_bp"]
 
@@ -350,11 +406,15 @@ class ResultValidator:
     def _check_state_counts(result: dict[str, Any]) -> list[ValidationIssue]:
         """Check that the state counts add up to the total.
 
+        Sums ``summary.state_counts.by_number_of_runs`` and compares the sum
+        with ``summary.state_counts.total``.
+
         Args:
             result: A successful result that has passed the schema.
 
         Returns:
-            A problem if the counts do not add up to the total.
+            An issue at ``summary/state_counts`` giving both numbers if they
+            differ, otherwise an empty list.
         """
         state_counts = result["summary"]["state_counts"]
         counted = sum(state_counts["by_number_of_runs"])
@@ -374,12 +434,16 @@ class ResultValidator:
     def _check_partition_function(cls, result: dict[str, Any]) -> list[ValidationIssue]:
         """Check that the partition function is above 0 and matches its natural log.
 
+        A null ``summary.partition_function`` is accepted. Otherwise its log is
+        compared with ``summary.ln_partition_function``, to within
+        :attr:`LN_PARTITION_FUNCTION_RTOL`.
+
         Args:
             result: A successful result that has passed the schema.
 
         Returns:
-            A problem if the partition function is not above 0, or does not
-            match ``ln_partition_function``.
+            An issue at ``summary/partition_function`` if it is 0 or below, or
+            at ``summary/ln_partition_function`` if the two do not match.
         """
         summary = result["summary"]
         partition_function = summary["partition_function"]
