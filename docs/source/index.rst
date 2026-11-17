@@ -107,9 +107,9 @@ Explore the documentation
    :hidden:
 
    User Guide <user-guide>
-   Structured Results <result-format>
    Installation <installation>
    Source Usage <source-usage>
+   Structured Results <result-format>
    Examples <examples>
    Development <development>
    Citation <citation>
