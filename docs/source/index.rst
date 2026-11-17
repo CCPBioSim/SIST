@@ -72,11 +72,17 @@ Explore the documentation
 
       Install SIST with Conda or from source.
 
-   .. grid-item-card:: 🔧 Source Usage
+   .. grid-item-card:: 🛠️ Source Usage
       :link: source-usage
       :link-type: doc
 
       Run SIST and its parts from a source build.
+
+   .. grid-item-card:: 🗂️ Structured Results
+      :link: result-format
+      :link-type: doc
+
+      Write results as JSON, and check them against the schema.
 
    .. grid-item-card:: 🧬 Examples
       :link: examples
@@ -84,7 +90,7 @@ Explore the documentation
 
       Example inputs and outputs to try.
 
-   .. grid-item-card:: 🧪 Development
+   .. grid-item-card:: 🔧 Development
       :link: development
       :link-type: doc
 
