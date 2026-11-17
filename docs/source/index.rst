@@ -101,6 +101,7 @@ Explore the documentation
    :hidden:
 
    User Guide <user-guide>
+   Structured Results <result-format>
    Installation <installation>
    Source Usage <source-usage>
    Examples <examples>
