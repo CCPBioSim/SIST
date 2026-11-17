@@ -5,18 +5,18 @@
     "software": {
       "name": "SIST",
       "version": "1.1.0",
-      "git_sha": "9b4585d4cec0e9392c65a5178ec1534c6ddc699c",
+      "git_sha": null,
       "engine": "trans_three",
       "irf_version": null
     },
     "environment": {
-      "python": "3.13.13",
+      "python": "3.13.18",
       "platform": "Linux-7.0.0-1017-oem-x86_64-with-glibc2.43"
     },
     "command": ["sist", "-a", "M", "-f", "pbr322.toy.fa", "-s", "0.3", "--json", "melting-failed-underflow.json"],
-    "started_at": "2026-11-16T16:02:34Z",
-    "finished_at": "2026-11-16T16:02:35Z",
-    "wall_time_s": 0.609
+    "started_at": "2026-11-17T10:35:17Z",
+    "finished_at": "2026-11-17T10:35:18Z",
+    "wall_time_s": 0.581
   },
   "calculation": {
     "algorithm": "M",
